@@ -5,7 +5,8 @@
 # shellcheck source=infra/common.sh
 source "$(dirname "$0")/common.sh"
 
-read -r -p "Delete cluster ${CLUSTER_NAME}, ECR repo ${ECR_REPOSITORY} and role ${GITHUB_ROLE_NAME}? [y/N] " ans
+ECR_USER="${GITHUB_ECR_USER:-github-actions-student-portal-ecr}"
+read -r -p "Delete cluster ${CLUSTER_NAME}, ECR repo ${ECR_REPOSITORY}, role ${GITHUB_ROLE_NAME} and IAM user ${ECR_USER}? [y/N] " ans
 [[ "$ans" == "y" || "$ans" == "Y" ]] || { echo "Aborted"; exit 1; }
 
 log "Removing Argo CD Application (prunes app resources incl. the load balancer)"
@@ -44,5 +45,14 @@ aws ecr delete-repository --region "$AWS_REGION" --repository-name "$ECR_REPOSIT
 log "Deleting GitHub OIDC role"
 aws iam delete-role-policy --role-name "$GITHUB_ROLE_NAME" --policy-name ecr-push || true
 aws iam delete-role --role-name "$GITHUB_ROLE_NAME" || true
+log "Deleting CI IAM user ${ECR_USER} (Free plan fallback) and its access keys"
+if aws iam get-user --user-name "$ECR_USER" >/dev/null 2>&1; then
+  for key in $(aws iam list-access-keys --user-name "$ECR_USER" --query 'AccessKeyMetadata[].AccessKeyId' --output text); do
+    aws iam delete-access-key --user-name "$ECR_USER" --access-key-id "$key"
+  done
+  aws iam delete-user-policy --user-name "$ECR_USER" --policy-name ecr-push || true
+  aws iam delete-user --user-name "$ECR_USER" && ok "Deleted IAM user ${ECR_USER}"
+  warn "Also delete the AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets in GitHub."
+fi
 warn "The GitHub OIDC identity provider was kept (other repos may use it). Remove it in IAM if not needed."
 ok "Teardown complete. Remember to stop/terminate the EC2 admin instance too."

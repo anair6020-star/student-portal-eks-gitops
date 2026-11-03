@@ -12,7 +12,7 @@ Developer → GitHub → GitHub Actions → Docker image → Amazon ECR → Git 
 flowchart LR
     dev([Developer]) -- git push --> gh[(GitHub repo<br/>app code + k8s/)]
     gh -- triggers --> gha[GitHub Actions<br/>test · build · smoke test]
-    gha -- OIDC: short-lived<br/>AWS credentials --> iam[IAM role<br/>ECR push only]
+    gha -- access key from<br/>encrypted GitHub secrets --> iam[IAM user<br/>ECR push only]
     gha -- docker push :sha --> ecr[(Amazon ECR)]
     gha -- commit new image tag<br/>to k8s/kustomization.yaml --> gh
     subgraph EKS[Amazon EKS cluster]
@@ -25,12 +25,24 @@ flowchart LR
     user([Browser]) --> lb
 ```
 
+Deployed environment:
+
+| Item | Value |
+|---|---|
+| AWS region | `ap-southeast-2` (Sydney) |
+| EKS cluster | `student-portal-eks`, Kubernetes 1.35, created with `eksctl` |
+| Worker nodes | Managed node group of **3 × `t3.small`** (free-tier-eligible type) in private subnets, one NAT gateway |
+| Container registry | Amazon ECR repository `student-portal` (immutable tags, scan on push) |
+| CI credentials | Dedicated IAM user that can only push to that ECR repository (AWS Free plan fallback, see below) |
+| GitOps | Argo CD v3.5.7, automated sync, prune and self-heal |
+| Public endpoint | Kubernetes `LoadBalancer` Service, which provisions an AWS load balancer |
+
 Key design decisions:
 
 | Decision | Why |
 |---|---|
 | **Pull-based GitOps** (Argo CD pulls from Git) | GitHub Actions never gets cluster credentials. The cluster state is whatever Git says, so every deploy is an auditable commit and rollback is `git revert`. |
-| **GitHub OIDC → IAM role** | No long-lived AWS access keys stored in GitHub. The role can be assumed only by this repo's `main` branch and can only push to one ECR repository. |
+| **Scoped IAM user for CI** (AWS Free plan fallback) | The preferred design is GitHub OIDC with no stored keys, but AWS Free plan accounts block IAM OIDC identity providers with a service control policy. So GitHub Actions authenticates as a dedicated IAM user whose only permission is pushing to the one ECR repository. Its access key is kept in encrypted GitHub secrets, so a leaked key cannot touch the cluster or anything else. The workflow still supports OIDC: on a normal account, run `infra/02-github-oidc-role.sh`, set `AWS_ROLE_ARN`, and the stored key is no longer used. |
 | **Immutable image tags = git SHA** | Each running pod maps to an exact commit. ECR tag immutability stops a tag being overwritten. |
 | **Build once, test, push the same image** | The image that passed the smoke test is the one pushed; there is no rebuild between test and release. |
 | **Kustomize `images:` block** | CI edits one field (`newTag`) with `yq`; no fragile `sed` on YAML. |
@@ -71,7 +83,7 @@ Security and operations: a self-only Content-Security-Policy (fonts, icons and s
 
 </details>
 
-The sidebar deployment badge and the page footer show the **running version (git SHA)** and the **pod name**, which makes the end-to-end demo easy to see: after a push, the footer changes to the new SHA, and refreshing shows requests spread across pods.
+The header ("Served by pod") and the page footer show the **running version (git SHA)** and the **pod name**, which makes the end-to-end demo easy to see: after a push, the footer changes to the new SHA, and refreshing shows requests spread across pods.
 
 Tech stack: Python 3.12, Flask 3, SQLAlchemy, Flask-WTF (CSRF protection), Gunicorn, PostgreSQL 17 (in-cluster) or SQLite (local/tests). The UI is server-rendered Jinja with a small vanilla-JS file and no build step; Inter, Source Serif 4 and JetBrains Mono are self-hosted.
 
@@ -91,7 +103,7 @@ Tech stack: Python 3.12, Flask 3, SQLAlchemy, Flask-WTF (CSRF protection), Gunic
 │   └── pdb.yaml             PodDisruptionBudget
 ├── argocd/application.yaml  Argo CD Application (automated sync, prune, self-heal)
 ├── .github/workflows/ci-cd.yml
-├── infra/                   Numbered setup scripts for EC2, ECR, OIDC, EKS, Argo CD, teardown
+├── infra/                   Numbered setup scripts for EC2, ECR, CI credentials, EKS, Argo CD, teardown
 └── docs/
     ├── RUNBOOK.md           Step-by-step setup (assignment tasks 1-7)
     └── DEMO.md              End-to-end demonstration script + evidence checklist
@@ -114,10 +126,11 @@ make docker-build && make docker-run
 Follow **[docs/RUNBOOK.md](docs/RUNBOOK.md)**. In short:
 
 ```bash
-cp infra/config.env.example infra/config.env      # set GITHUB_OWNER, region, names
+cp infra/config.env.example infra/config.env      # set GITHUB_OWNER (region defaults to ap-southeast-2)
 bash infra/00-ec2-bootstrap.sh                     # on the Ubuntu EC2 admin box
 bash infra/01-create-ecr.sh
-bash infra/02-github-oidc-role.sh                  # prints the 3 GitHub variables to set
+bash infra/02b-github-ecr-user.sh                  # CI credentials: prints 2 secrets + 2 variables to set
+                                                   # (on accounts that allow OIDC: infra/02-github-oidc-role.sh)
 bash infra/03-create-eks-cluster.sh                # or: --existing for a provided cluster
 bash infra/04-bootstrap-app-secrets.sh
 # run the GitHub Actions pipeline once, then: git pull
@@ -133,15 +146,26 @@ Then follow **[docs/DEMO.md](docs/DEMO.md)** for the end-to-end demonstration.
 | Job | What it does | Runs on PRs? |
 |---|---|---|
 | `test` | Checkout, install deps, `ruff check`, `ruff format --check`, `pytest` with coverage | Yes |
-| `build-and-push` | Build the image (tag = short SHA, version baked in), start it and smoke-test `/healthz`, `/` and `/api/students`; then assume the AWS role via OIDC, log in to ECR and push the tested image; report the ECR scan result | Build and smoke test only |
+| `build-and-push` | Build the image (tag = short SHA, version baked in), start it and smoke-test `/healthz`, `/` and `/api/students`; then sign in to AWS with the scoped IAM user's key (or an OIDC role when `AWS_ROLE_ARN` is set), log in to ECR and push the tested image; report the ECR scan result | Build and smoke test only |
 | `update-manifest` | Set `newName`/`newTag` in `k8s/kustomization.yaml` with `yq` and commit `deploy: student-portal <sha>` back to `main` | No |
 
-GitHub repository **variables** required (identifiers, not secrets): `AWS_ROLE_ARN`, `AWS_REGION`, `ECR_REPOSITORY`. No GitHub secrets are needed.
+GitHub settings used by the pipeline (Settings → Secrets and variables → Actions):
+
+| Kind | Name | Value |
+|---|---|---|
+| Variable | `AWS_REGION` | `ap-southeast-2` |
+| Variable | `ECR_REPOSITORY` | `student-portal` |
+| Secret | `AWS_ACCESS_KEY_ID` | Access key of the ECR-push-only IAM user |
+| Secret | `AWS_SECRET_ACCESS_KEY` | Its secret key |
+
+`AWS_ROLE_ARN` is deliberately left unset; setting it switches the workflow to OIDC.
 
 ## Security notes
 
-- No AWS keys anywhere: EC2 uses an instance role; GitHub uses OIDC.
-- The OIDC trust policy is pinned to `repo:<owner>/<repo>:ref:refs/heads/main`, so forks and other branches cannot assume the role.
+- The EC2 admin box has no access keys: it uses an IAM instance role (`aws configure` was never run).
+- GitHub Actions uses one long-lived access key, because OIDC is blocked on the AWS Free plan. Its blast radius is kept small: the IAM user has no console password and an inline policy allowing only `ecr:GetAuthorizationToken` plus push/read on the single `student-portal` repository. It cannot reach EKS, IAM or any other service.
+- The key is stored only in encrypted GitHub secrets, which are not exposed to pull requests from forks. Pull requests never reach the AWS steps. Rotate it by deleting the key in IAM and re-running `infra/02b-github-ecr-user.sh`.
+- Where OIDC is available, `infra/02-github-oidc-role.sh` creates a role whose trust policy is pinned to `repo:<owner>/<repo>:ref:refs/heads/main`, removing stored keys altogether.
 - Application secrets (DB password, Flask secret key) are generated on the cluster by `infra/04-bootstrap-app-secrets.sh` and never committed.
 - Argo CD UI is reached via `kubectl port-forward` over SSH, not exposed publicly.
 
@@ -156,6 +180,6 @@ GitHub repository **variables** required (identifiers, not secrets): `AWS_ROLE_A
 ## Clean up
 
 ```bash
-bash infra/99-teardown.sh   # deletes the LB, EKS cluster, ECR repo and GitHub role
+bash infra/99-teardown.sh   # deletes the LB, EKS cluster, ECR repo, and the CI IAM user and its keys
 ```
 Then stop or terminate the EC2 admin instance. EKS, NAT gateway, worker nodes and the load balancer all bill by the hour.

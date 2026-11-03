@@ -2,7 +2,11 @@
 
 Each section maps to a task in the assignment. Commands are meant to be copied as-is; replace values in `<angle brackets>`.
 
-**Assumed defaults** (change in `infra/config.env`): region `ap-south-1` (Mumbai), cluster `student-portal-eks`, ECR repo `student-portal`, branch `main`.
+**Defaults used for this deployment** (change in `infra/config.env`): region `ap-southeast-2` (Sydney), cluster `student-portal-eks` with 3 × `t3.small` worker nodes, ECR repo `student-portal`, branch `main`.
+
+> **AWS Free plan note.** This project was deployed on an AWS Free plan account. Two limits shaped the setup:
+> - **Instance types:** only free-tier-eligible types can be launched, so the worker nodes are `t3.small` (2 vCPU, 2 GiB). Three of them give enough pod capacity for the app, PostgreSQL and Argo CD.
+> - **No IAM OIDC providers:** a service control policy denies `iam:CreateOpenIDConnectProvider`, so GitHub Actions cannot use OIDC. Step 5 uses a scoped IAM user instead (`infra/02b-github-ecr-user.sh`). On a normal account, use the OIDC script in step 5b.
 
 | # | Task | Where you run it | Time |
 |---|---|---|---|
@@ -10,7 +14,7 @@ Each section maps to a task in the assignment. Commands are meant to be copied a
 | 2 | EC2 admin box + IAM | AWS Console, then SSH | 15 min |
 | 3 | Docker image + ECR | EC2 | 10 min |
 | 4 | EKS cluster + kubectl | EC2 | 20 min (cluster create) |
-| 5 | GitHub Actions + OIDC | EC2 + GitHub | 10 min |
+| 5 | GitHub Actions + CI credentials | EC2 + GitHub | 10 min |
 | 6 | Argo CD | EC2 | 10 min |
 | 7 | End-to-end demo | See [DEMO.md](DEMO.md) | 15 min |
 
@@ -37,7 +41,7 @@ Console: **IAM → Roles → Create role → AWS service → EC2** → attach a 
 
 Policy choice:
 - **Lab account (simplest):** `AdministratorAccess`. `eksctl` needs to create IAM roles, CloudFormation stacks, a VPC and the cluster. Detach it after the assignment.
-- **Least privilege:** use the eksctl minimum IAM policies (<https://eksctl.io/usage/minimum-iam-policies/>) plus ECR and IAM permissions for scripts 01 and 02.
+- **Least privilege:** use the eksctl minimum IAM policies (<https://eksctl.io/usage/minimum-iam-policies/>) plus ECR and IAM permissions for scripts 01 and 02b.
 
 Equivalent AWS CLI (e.g. from CloudShell):
 ```bash
@@ -55,7 +59,8 @@ aws iam add-role-to-instance-profile --instance-profile-name sis-admin-ec2-profi
 | Setting | Value |
 |---|---|
 | AMI | Ubuntu Server 24.04 LTS |
-| Type | `t3.medium` (Docker builds need ~2 GB RAM) |
+| Type | `t3.small` (free-tier eligible; 2 GiB RAM is enough for the Docker build) |
+| Region | `ap-southeast-2` (Sydney), same as the cluster |
 | Storage | 20 GB gp3 |
 | Security group | Inbound **SSH 22 from My IP only**. Nothing else. |
 | IAM instance profile | `sis-admin-ec2-role` |
@@ -83,7 +88,7 @@ Do **not** run `aws configure` with access keys. The instance role supplies temp
 
 ```bash
 cp infra/config.env.example infra/config.env
-nano infra/config.env     # set GITHUB_OWNER (and region/cluster name if different)
+nano infra/config.env     # set GITHUB_OWNER; AWS_REGION is already ap-southeast-2
 ```
 
 ## 3. Docker and Amazon ECR
@@ -119,6 +124,7 @@ aws ecr describe-images --repository-name $ECR_REPOSITORY --region $AWS_REGION \
 ```bash
 bash infra/03-create-eks-cluster.sh
 ```
+This renders `infra/eks-cluster.yaml` and runs `eksctl`. It creates a VPC with private subnets and one NAT gateway, the EKS control plane, and a managed node group of **3 × `t3.small`** (Amazon Linux 2023, 20 GB gp3). `withOIDC` is `false` because the Free plan blocks IAM OIDC providers and the app does not need IRSA.
 
 **Cluster provided by the instructor:**
 ```bash
@@ -135,7 +141,7 @@ bash infra/03-create-eks-cluster.sh --existing
 
 Check:
 ```bash
-kubectl get nodes          # 2 nodes, STATUS Ready
+kubectl get nodes          # 3 nodes (t3.small), STATUS Ready
 ```
 
 Create the namespace and the application Secret (random DB password and Flask key, not stored in Git):
@@ -145,22 +151,40 @@ bash infra/04-bootstrap-app-secrets.sh
 
 > The Deployment and Service YAML manifests are in `k8s/`. They are deployed by Argo CD in step 6, which is the GitOps way. To see them deployed directly first (optional, after step 5 has pushed an image), run `kubectl apply -k k8s/` and then let Argo CD adopt them.
 
-## 5. CI/CD with GitHub Actions (OIDC)
+## 5. CI/CD with GitHub Actions
 
+### 5a. CI credentials: scoped IAM user (used here, AWS Free plan)
+
+```bash
+bash infra/02b-github-ecr-user.sh
+```
+This creates the IAM user `github-actions-student-portal-ecr`, which:
+- has **no console password** (programmatic access only)
+- has one inline policy, `ecr-push`, allowing only `ecr:GetAuthorizationToken` and push/read actions on the **one** `student-portal` repository (`infra/iam/github-ecr-push-policy.json`). It cannot reach EKS, IAM or anything else.
+- gets one access key, printed **once**
+
+Add what it prints in GitHub → Settings → Secrets and variables → Actions:
+
+| Tab | Name | Value |
+|---|---|---|
+| **Secrets** | `AWS_ACCESS_KEY_ID` | printed by the script |
+| **Secrets** | `AWS_SECRET_ACCESS_KEY` | printed by the script (shown once; never commit or share it) |
+| **Variables** | `AWS_REGION` | `ap-southeast-2` |
+| **Variables** | `ECR_REPOSITORY` | `student-portal` |
+
+Do **not** create `AWS_ROLE_ARN`. The workflow picks its sign-in method from that variable: if it is unset, it uses the stored key. Run `clear` afterwards so the key is not left on screen.
+
+Why this is acceptable: the key can only push images to one repository, it lives only in encrypted GitHub secrets, and pull requests never reach the AWS steps. To rotate it, delete the key in IAM and re-run the script.
+
+### 5b. Alternative: GitHub OIDC (accounts that allow it)
+
+On a normal AWS account, prefer short-lived credentials with nothing stored:
 ```bash
 bash infra/02-github-oidc-role.sh
 ```
-This registers GitHub's OIDC provider in IAM and creates role `github-actions-student-portal-ecr`, which:
-- can be assumed **only** by `repo:<GITHUB_OWNER>/student-portal-eks-gitops:ref:refs/heads/main`
-- can **only** push to the one ECR repository
+This registers GitHub's OIDC provider and creates a role that only `repo:<GITHUB_OWNER>/student-portal-eks-gitops:ref:refs/heads/main` can assume, with the same ECR-only permissions. Set the variable `AWS_ROLE_ARN` to the printed ARN, then delete the two access-key secrets and the IAM user.
 
-Add the three values it prints as **repository variables**: GitHub → Settings → Secrets and variables → Actions → **Variables** tab → New repository variable:
-
-| Name | Example |
-|---|---|
-| `AWS_ROLE_ARN` | `arn:aws:iam::123456789012:role/github-actions-student-portal-ecr` |
-| `AWS_REGION` | `ap-south-1` |
-| `ECR_REPOSITORY` | `student-portal` |
+### 5c. First pipeline run
 
 Run the pipeline the first time: GitHub → **Actions → CI/CD → Run workflow** (on `main`).
 
@@ -219,7 +243,11 @@ See **[DEMO.md](DEMO.md)**.
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `Could not assume role with OIDC` | Variable `AWS_ROLE_ARN` wrong, or repo/branch name differs from the trust policy | Check `GITHUB_OWNER`/`GITHUB_REPO` in `config.env`, re-run `02-github-oidc-role.sh` |
+| `Credentials could not be loaded` / `security token included in the request is invalid` | Secrets `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` missing, mistyped or rotated | Re-check both secrets; to rotate, delete the key in IAM and re-run `02b-github-ecr-user.sh` |
+| `AccessDenied` on `ecr:InitiateLayerUpload` | Variable `ECR_REPOSITORY` or `AWS_REGION` differs from what the IAM policy allows | Variables must be `student-portal` and `ap-southeast-2`; re-run `02b-github-ecr-user.sh` after changing `config.env` |
+| `AccessDenied` on `iam:CreateOpenIDConnectProvider` | AWS Free plan blocks OIDC providers | Expected; use step 5a |
+| `Could not assume role with OIDC` (5b only) | Variable `AWS_ROLE_ARN` wrong, or repo/branch name differs from the trust policy | Check `GITHUB_OWNER`/`GITHUB_REPO` in `config.env`, re-run `02-github-oidc-role.sh` |
+| Pods `Pending`, `Too many pods` | `t3.small` allows 11 pods per node | Keep 3 nodes; don't scale web replicas far beyond 4 |
 | `update-manifest` fails with 403 | Workflow permissions are read-only, or branch protection | Step 1.3 |
 | Pods `ImagePullBackOff` | Image tag not in ECR, or region mismatch | `aws ecr describe-images ...`; confirm `newName` region matches cluster region |
 | Pods `CreateContainerConfigError` | Secret missing | `bash infra/04-bootstrap-app-secrets.sh` |

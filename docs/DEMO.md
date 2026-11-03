@@ -102,7 +102,7 @@ Argo CD rolls the Deployment back to the previous image. The footer shows the ol
 | 4 | ECR console: repository with image tags, scan results, immutable tags | Task 3 |
 | 5 | `kubectl get nodes` and `kubectl -n student-portal get pods,svc` | Task 4 |
 | 6 | App in browser via the load balancer URL | Task 4 |
-| 7 | IAM role trust policy showing the GitHub OIDC provider and `repo:...:ref:refs/heads/main` | Task 5 |
+| 7 | IAM user `github-actions-student-portal-ecr` with its single `ecr-push` inline policy, and the GitHub Actions secrets/variables page (names only, values hidden) | Task 5 |
 | 8 | GitHub Actions run with all three jobs green | Task 5 |
 | 9 | Bot commit updating `k8s/kustomization.yaml` | Task 5 |
 | 10 | Argo CD UI: application tree, **Synced** and **Healthy** | Task 6 |
