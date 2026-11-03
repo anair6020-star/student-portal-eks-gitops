@@ -1,0 +1,96 @@
+# PostgreSQL shared by all web replicas, reachable only inside the cluster.
+# Storage is an emptyDir: data survives app deployments and app pod restarts,
+# but is lost if THIS pod is rescheduled. Fine for the assignment demo; see
+# README "Production hardening" for the Amazon RDS / EBS PVC options.
+apiVersion: v1
+kind: Service
+metadata:
+  name: student-portal-db
+  labels:
+    app.kubernetes.io/name: student-portal-db
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: student-portal-db
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: student-portal-db
+  labels:
+    app.kubernetes.io/name: student-portal-db
+    app.kubernetes.io/component: database
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: student-portal-db
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: student-portal-db
+        app.kubernetes.io/component: database
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70     # 'postgres' user in the official alpine image
+        runAsGroup: 70
+        fsGroup: 70
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: students
+            - name: POSTGRES_USER
+              value: students
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: student-portal-secrets
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "students", "-d", "students", "-h", "127.0.0.1"]
+            periodSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "students", "-d", "students", "-h", "127.0.0.1"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: run
+              mountPath: /var/run/postgresql
+      volumes:
+        - name: data
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: run
+          emptyDir: {}

@@ -1,0 +1,15 @@
+# Public endpoint. On EKS this provisions an AWS load balancer automatically.
+apiVersion: v1
+kind: Service
+metadata:
+  name: student-portal
+  labels:
+    app.kubernetes.io/name: student-portal
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: student-portal
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

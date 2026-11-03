@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Student Information System{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="{{ url_for('web.index') }}">
+        <span class="brand-mark">SIS</span>
+        <span>Student Information System</span>
+      </a>
+      <a class="btn btn-primary" href="{{ url_for('web.create_student') }}">+ Add student</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}" role="status">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="wrap footer">
+    <span>Version <strong data-testid="app-version">{{ app_version }}</strong></span>
+    <span>Served by pod <code>{{ pod_name }}</code></span>
+    <span>Docker · Amazon ECR · Amazon EKS · GitHub Actions · Argo CD</span>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,30 @@
+# Argo CD Application: watches k8s/ in this GitHub repo and keeps EKS in sync.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: student-portal
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io   # deleting the app also removes its resources
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<GITHUB_OWNER>/<GITHUB_REPO>.git
+    targetRevision: main
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: student-portal
+  syncPolicy:
+    automated:
+      prune: true      # remove resources deleted from Git
+      selfHeal: true   # revert manual kubectl changes back to what Git says
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

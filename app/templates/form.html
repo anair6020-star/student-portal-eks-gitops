@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit" if mode == "edit" else "Add" }} student · Student Information System{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h2>{{ "Edit student" if mode == "edit" else "Add a student" }}</h2>
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% set fields = [
+      ("roll_number", "Roll number", "text", "e.g. CSA2026010"),
+      ("name", "Full name", "text", ""),
+      ("email", "Email", "email", "name@example.edu"),
+      ("course", "Course", "text", "e.g. Cloud Native Orchestration"),
+      ("year", "Year (1-6)", "number", ""),
+    ] %}
+    {% for key, label, type, placeholder in fields %}
+      <label for="{{ key }}">{{ label }}</label>
+      <input id="{{ key }}" name="{{ key }}" type="{{ type }}" value="{{ form.get(key, '') }}"
+             placeholder="{{ placeholder }}" {% if type == "number" %}min="1" max="6"{% endif %} required
+             {% if errors.get(key) %}aria-invalid="true"{% endif %}>
+      {% if errors.get(key) %}<p class="field-error">{{ errors[key] }}</p>{% endif %}
+    {% endfor %}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{{ "Save changes" if mode == "edit" else "Add student" }}</button>
+      <a class="btn btn-ghost" href="{{ url_for('web.index') }}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
