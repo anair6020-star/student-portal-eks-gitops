@@ -2,22 +2,18 @@
 # The CI pipeline updates ONLY the `images` block below with the new ECR image tag.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: student-portal
-
 labels:
   - pairs:
       app.kubernetes.io/part-of: student-portal
       app.kubernetes.io/managed-by: argocd
     includeSelectors: false
-
 resources:
   - postgres.yaml
   - deployment.yaml
   - service.yaml
   - pdb.yaml
-
 images:
   - name: student-portal
-    newName: <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/student-portal
-    newTag: initial
+    newName: 891495583325.dkr.ecr.ap-southeast-2.amazonaws.com/student-portal
+    newTag: f3ac086
