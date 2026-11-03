@@ -119,12 +119,26 @@ jobs:
           docker logs smoke | tail -n 20
 
       # ---- Everything below runs only for pushes to main (never for PRs) ----
+      # Preferred: OIDC (short-lived credentials, nothing stored). Used when the
+      # repository variable AWS_ROLE_ARN is set.
       - name: Configure AWS credentials (OIDC, no stored keys)
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && vars.AWS_ROLE_ARN != ''
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           role-session-name: gha-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Fallback: AWS Free plan accounts block IAM OIDC providers through a
+      # service control policy, so OIDC cannot be set up there. Use a dedicated
+      # IAM user that can ONLY push to this one ECR repository
+      # (infra/02b-github-ecr-user.sh). Keys live in encrypted GitHub secrets.
+      - name: Configure AWS credentials (scoped IAM user fallback)
+        if: github.event_name != 'pull_request' && vars.AWS_ROLE_ARN == ''
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Log in to Amazon ECR

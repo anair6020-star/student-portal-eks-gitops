@@ -1,5 +1,5 @@
 # eksctl cluster definition (rendered by 03-create-eks-cluster.sh via envsubst).
-# 2 x t3.medium worker nodes in private subnets, one NAT gateway (cost-conscious lab setup).
+# 3 x t3.small worker nodes (free-tier eligible types) in private subnets, one NAT gateway (cost-conscious lab setup).
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
@@ -12,7 +12,7 @@ metadata:
     purpose: cicd-assignment
 
 iam:
-  withOIDC: true   # enables IAM Roles for Service Accounts for future add-ons
+  withOIDC: false  # true needs an IAM OIDC provider (blocked on AWS Free plan accounts); not needed by this app
 
 accessConfig:
   authenticationMode: API_AND_CONFIG_MAP
@@ -28,9 +28,9 @@ vpc:
 managedNodeGroups:
   - name: ng-general
     amiFamily: AmazonLinux2023
-    instanceType: t3.medium
-    minSize: 2
-    desiredCapacity: 2
+    instanceType: t3.small
+    minSize: 3
+    desiredCapacity: 3
     maxSize: 3
     volumeSize: 20
     volumeType: gp3
