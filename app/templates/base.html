@@ -1,5 +1,6 @@
 {% from "partials/icons.html" import icon %}
-{%- set section = "students" if request.endpoint and request.endpoint.startswith("web.") and request.endpoint not in ("web.index", "web.create_student") else ("new" if request.endpoint == "web.create_student" else "home") -%}
+{%- set ep = request.endpoint or "" -%}
+{%- set section = {"web.index": "home", "web.create_student": "new", "web.endpoints": "endpoints"}.get(ep, "students" if ep.startswith("web.") else "home") -%}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,10 +53,10 @@
         ("home", url_for("web.index"), "Home"),
         ("students", url_for("web.list_students"), "Students"),
         ("new", url_for("web.create_student"), "Add Student"),
+        ("endpoints", url_for("web.endpoints"), "Endpoints"),
       ] %}
       <a class="navbar-link {{ 'is-active' if section == key }}" href="{{ href }}" {% if section == key %}aria-current="page"{% endif %}>{{ label }}</a>
       {% endfor %}
-      <a class="navbar-link navbar-api" href="{{ url_for('api_v1.get_stats') }}">API</a>
     </div>
   </nav>
 
@@ -80,6 +81,7 @@
           <li><a href="{{ url_for('web.list_students') }}">Students</a></li>
           <li><a href="{{ url_for('web.create_student') }}">Add student</a></li>
           <li><a href="{{ url_for('web.export_csv') }}">Export CSV</a></li>
+          <li><a href="{{ url_for('web.endpoints') }}">Endpoints</a></li>
         </ul>
       </section>
       <section>

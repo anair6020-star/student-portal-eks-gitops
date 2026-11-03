@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 from flask import Blueprint, Response, abort, flash, redirect, render_template, request, stream_with_context, url_for
 
+from ..endpoints import GROUPS
 from ..presenters import bar_rows, donut_segments
 from ..services import stats, students
 from ..validation import MAX_YEAR, MIN_YEAR
@@ -29,6 +30,12 @@ def index():
         course_bars=bar_rows(data["per_course"], "course"),
         year_ring=donut_segments([r for r in data["per_year"] if r["count"]], "year"),
     )
+
+
+@web_bp.get("/endpoints")
+def endpoints():
+    """Reference page listing every URL, for assignment reviewers."""
+    return render_template("endpoints.html", groups=GROUPS, base_url=request.host_url)
 
 
 @web_bp.get("/students")

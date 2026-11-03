@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+{% from "partials/banner.html" import banner %}
+{% block title %}Endpoints{% endblock %}
+{% block banner %}
+{{ banner("Endpoints", [("Endpoints", None)], "Every URL this application serves, with links to try them. Intended for assignment reviewers.") }}
+{% endblock %}
+{% block content %}
+
+<section class="card status-card" aria-labelledby="live-title">
+  <header class="card-head">
+    <div>
+      <h2 id="live-title" class="card-title">Live status</h2>
+      <p class="card-sub">Checked from your browser when this page loads</p>
+    </div>
+  </header>
+  <ul class="probes" role="list">
+    {% for path, label in [("/healthz", "Liveness"), ("/readyz", "Readiness"), ("/version", "Version"), ("/api/students", "Original API")] %}
+    <li class="probe" data-probe="{{ path }}">
+      <span class="probe-label">{{ label }}</span>
+      <code class="mono">GET {{ path }}</code>
+      <span class="probe-result" data-probe-result>Checking…</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="muted small">Version <strong class="mono">{{ app_version }}</strong> · Pod <code class="mono">{{ pod_name }}</code> · Base URL <code class="mono">{{ base_url }}</code></p>
+</section>
+
+{% for title, description, items in groups %}
+<section class="card card-flush endpoint-group" aria-labelledby="group-{{ loop.index }}">
+  <header class="card-head card-head-pad">
+    <div>
+      <h2 id="group-{{ loop.index }}" class="card-title">{{ title }}</h2>
+      <p class="card-sub">{{ description }}</p>
+    </div>
+    <span class="count-badge">{{ items|length }}</span>
+  </header>
+  <div class="table-wrap">
+    <table class="table table-endpoints">
+      <thead>
+        <tr><th scope="col" class="col-method">Method</th><th scope="col" class="col-path">Path</th><th scope="col">Purpose</th><th scope="col" class="right col-try">Try it</th></tr>
+      </thead>
+      <tbody>
+        {% for e in items %}
+        <tr>
+          <td class="nowrap">{% for m in e.methods %}<span class="method method-{{ m|lower }}">{{ m }}</span>{% endfor %}</td>
+          <td><code class="mono path">{{ e.display }}</code></td>
+          <td>{{ e.purpose }}{% if e.note %}<span class="endpoint-note">{{ e.note }}</span>{% endif %}</td>
+          <td class="right nowrap">
+            {% if e.example %}<a class="link" href="{{ e.example }}">Open {{ icon("arrow-right") }}</a>{% elif e.rule.startswith("/api/") %}<span class="muted small">See curl below</span>{% else %}<span class="muted small">Delete button</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endfor %}
+
+<section class="card" aria-labelledby="curl-title">
+  <header class="card-head">
+    <div>
+      <h2 id="curl-title" class="card-title">Try the write endpoints with curl</h2>
+      <p class="card-sub">The JSON APIs do not need a CSRF token. Run these from a terminal.</p>
+    </div>
+  </header>
+  <pre class="code-block"><code># Create a student
+curl -i -X POST {{ base_url }}api/v1/students \
+  -H "Content-Type: application/json" \
+  -d '{"roll_number":"CSA2026099","name":"Test Student","email":"test@example.edu","course":"Cloud Computing","year":2}'
+
+# Update it (replace 26 with the id returned above)
+curl -i -X PUT {{ base_url }}api/v1/students/26 \
+  -H "Content-Type: application/json" \
+  -d '{"roll_number":"CSA2026099","name":"Test Student","email":"test@example.edu","course":"DevOps Engineering","year":3}'
+
+# Delete it
+curl -i -X DELETE {{ base_url }}api/v1/students/26
+
+# Validation error example (returns 400 with field messages)
+curl -i -X POST {{ base_url }}api/v1/students -H "Content-Type: application/json" -d '{"name":"X"}'</code></pre>
+</section>
+{% endblock %}

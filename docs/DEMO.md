@@ -13,6 +13,8 @@ Before you start, open four windows:
    kubectl -n student-portal get pods -w
    ```
 
+Tip for reviewers: `http://<load-balancer-dns>/endpoints` lists every URL with live health checks.
+
 Record the starting state:
 ```bash
 kubectl -n argocd get application student-portal

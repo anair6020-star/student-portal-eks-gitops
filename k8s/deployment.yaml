@@ -63,6 +63,10 @@ spec:
                   key: FLASK_SECRET_KEY
             - name: SEED_DATA
               value: "true"
+            - name: POD_NAME          # shown in the UI footer ("Served by pod ...")
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           resources:
             requests:
               cpu: 100m

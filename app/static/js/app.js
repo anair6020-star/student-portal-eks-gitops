@@ -62,6 +62,17 @@
     }
   });
 
+  // ---- Endpoints page: live status checks (same origin only) -------------------
+  document.querySelectorAll("[data-probe]").forEach(function (item) {
+    var out = item.querySelector("[data-probe-result]");
+    fetch(item.getAttribute("data-probe"), { headers: { Accept: "application/json" }, cache: "no-store" })
+      .then(function (res) {
+        out.textContent = res.status + " " + (res.ok ? "OK" : res.statusText || "Error");
+        item.classList.add(res.ok ? "is-ok" : "is-fail");
+      })
+      .catch(function () { out.textContent = "Unreachable"; item.classList.add("is-fail"); });
+  });
+
   // ---- Form: live preview, focus the error summary ------------------------------------
   document.querySelectorAll("[data-preview]").forEach(function (target) {
     var input = document.getElementById(target.getAttribute("data-preview"));

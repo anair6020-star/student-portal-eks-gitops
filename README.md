@@ -51,6 +51,7 @@ Key design decisions:
 | **Delete** with an accessible `<dialog>` confirmation (no browser `confirm()`) | Delete buttons |
 | **Toast notifications** for flash messages (`aria-live`) | Every page |
 | University-portal layout (info bar, masthead, menu bar, title banner, multi-column footer) in navy and gold, keyboard navigation, visible focus, mobile layout at 375px | Every page |
+| **Endpoints reference** for reviewers: every URL grouped by type, with live status checks, example links and curl commands (kept in sync with the real routes by a test) | `/endpoints` |
 | Friendly **404 / 500** pages; JSON errors on API paths | Any missing route |
 | Original JSON API, unchanged | `GET/POST /api/students`, `GET/DELETE /api/students/<id>` |
 | **Versioned API** with pagination envelope (`?q=&course=&year=&sort=&order=&page=&per_page=`), `PUT`, and `{"error": {"code", "message", "fields"}}` errors | `/api/v1/students`, `/api/v1/students/<id>` |
@@ -66,7 +67,7 @@ Security and operations: a self-only Content-Security-Policy (fonts, icons and s
 |---|---|
 | ![Students list](docs/screenshots/students.png) | ![Form with validation errors](docs/screenshots/form-errors.png) |
 | ![Student detail](docs/screenshots/detail.png) | ![Delete confirmation dialog](docs/screenshots/dialog.png) |
-| ![Dashboard on a phone](docs/screenshots/dashboard-mobile.png) | ![Students on a phone](docs/screenshots/students-mobile.png) |
+| ![Endpoints reference](docs/screenshots/endpoints.png) | ![Dashboard on a phone](docs/screenshots/dashboard-mobile.png) |
 
 </details>
 
@@ -79,7 +80,7 @@ Tech stack: Python 3.12, Flask 3, SQLAlchemy, Flask-WTF (CSRF protection), Gunic
 ```
 .
 ├── app/                     Flask app: routes/ (thin) → services/ (logic) → models; templates, static
-├── tests/                   pytest tests (66 tests, ~99% coverage)
+├── tests/                   pytest tests (71 tests, ~99% coverage)
 ├── Dockerfile               Multi-stage, non-root image
 ├── gunicorn.conf.py         Production server settings
 ├── k8s/                     ← GitOps deployment config watched by Argo CD
@@ -101,7 +102,7 @@ Tech stack: Python 3.12, Flask 3, SQLAlchemy, Flask-WTF (CSRF protection), Gunic
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
-make test          # ruff-clean code, 66 tests
+make test          # ruff-clean code, 71 tests
 make run           # http://localhost:8080 (SQLite in /tmp)
 
 # Or in Docker

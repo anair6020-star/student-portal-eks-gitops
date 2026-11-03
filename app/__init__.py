@@ -1,5 +1,6 @@
 """Student Information System - Flask application factory."""
 
+import os
 import socket
 
 from flask import Flask
@@ -39,7 +40,7 @@ def create_app(config: dict | None = None) -> Flask:
     errors.init_app(app)
     presenters.register(app)
 
-    pod_name = socket.gethostname()
+    pod_name = runtime_name()
 
     @app.context_processor
     def inject_runtime_info():
@@ -49,6 +50,21 @@ def create_app(config: dict | None = None) -> Flask:
         init_db(app)
 
     return app
+
+
+def runtime_name() -> str:
+    """Name shown as "Served by pod".
+
+    In Kubernetes this is the pod name (POD_NAME from the Downward API, or the
+    hostname, which Kubernetes sets to the pod name). In Docker it is the
+    container ID. On a developer laptop it is just "local", so the machine's
+    own name is never shown.
+    """
+    if name := os.getenv("POD_NAME"):
+        return name
+    if os.getenv("KUBERNETES_SERVICE_HOST") or os.path.exists("/.dockerenv"):
+        return socket.gethostname()
+    return "local"
 
 
 __all__ = ["SEED_STUDENTS", "create_app", "db", "init_db"]
