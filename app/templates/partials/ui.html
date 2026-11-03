@@ -1,0 +1,24 @@
+{% from "partials/icons.html" import icon %}
+
+{% macro avatar(name, size="md") -%}
+<span class="avatar avatar-{{ size }} tone-{{ name|avatar_tone }}" aria-hidden="true">{{ name|initials }}</span>
+{%- endmacro %}
+
+{% macro year_badge(year) -%}
+<span class="badge badge-year">Year {{ year }}</span>
+{%- endmacro %}
+
+{% macro course_tag(course) -%}
+<span class="tag">{{ course }}</span>
+{%- endmacro %}
+
+{% macro delete_form(student, label=false) -%}
+<form method="post" action="{{ url_for('web.delete_student', student_id=student.id) }}" data-confirm-delete data-name="{{ student.name }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if label %}
+  <button class="btn btn-danger-ghost" type="submit">{{ icon("trash") }}Delete</button>
+  {% else %}
+  <button class="icon-btn icon-btn-danger" type="submit" aria-label="Delete {{ student.name }}" title="Delete">{{ icon("trash") }}</button>
+  {% endif %}
+</form>
+{%- endmacro %}

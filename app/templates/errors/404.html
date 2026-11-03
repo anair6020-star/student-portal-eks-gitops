@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+{% block title %}Page not found{% endblock %}
+{% block content %}
+<section class="error-page reveal">
+  <svg class="error-art" viewBox="0 0 200 160" aria-hidden="true">
+    <polygon class="plat-t" points="100,92 170,122 100,152 30,122"/>
+    <polygon class="pod-shadow" points="100,108 128,120 100,132 72,120"/>
+    <g class="iso-pod iso-pod-lost">
+      <polygon class="iso-replica-t" points="100,26 128,38 100,50 72,38"/>
+      <polygon class="iso-replica-l" points="72,38 100,50 100,82 72,70"/>
+      <polygon class="iso-replica-r" points="128,38 100,50 100,82 128,70"/>
+      <text class="error-q" x="100" y="72" text-anchor="middle">?</text>
+    </g>
+  </svg>
+  <p class="eyebrow">Error 404</p>
+  <h1 class="page-title">This page isn’t in the cluster</h1>
+  <p class="muted">The page or student you’re looking for doesn’t exist, or it may have been deleted.</p>
+  <div class="empty-actions">
+    <a class="btn btn-secondary" href="{{ url_for('web.list_students') }}">{{ icon("users") }}Students</a>
+    <a class="btn btn-primary" href="{{ url_for('web.index') }}">{{ icon("home") }}Back to dashboard</a>
+  </div>
+</section>
+{% endblock %}

@@ -16,6 +16,7 @@ graceful_timeout = 20
 keepalive = 5
 # /tmp is an emptyDir in Kubernetes, so this works with a read-only root filesystem.
 worker_tmp_dir = "/tmp"  # noqa: S108
-accesslog = "-"
+# The app writes its own JSON access log with a request ID (app/observability.py).
+accesslog = None
 errorlog = "-"
 loglevel = os.getenv("LOG_LEVEL", "info").lower()

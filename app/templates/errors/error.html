@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="error-page reveal">
+  <div class="error-code" aria-hidden="true">{{ status }}</div>
+  <p class="eyebrow">Error {{ status }}</p>
+  <h1 class="page-title">{{ title }}</h1>
+  <p class="muted">{{ message }}</p>
+  {% if g.request_id %}<p class="muted small">Reference <code class="mono">{{ g.request_id }}</code></p>{% endif %}
+  <div class="empty-actions">
+    <a class="btn btn-primary" href="{{ url_for('web.index') }}">{{ icon("home") }}Back to dashboard</a>
+  </div>
+</section>
+{% endblock %}

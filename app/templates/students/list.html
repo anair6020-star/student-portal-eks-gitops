@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+{% from "partials/ui.html" import avatar, year_badge, course_tag, delete_form %}
+{% block title %}Students{% endblock %}
+{% block content %}
+
+{% macro sort_header(column, label, cls="") -%}
+{%- set active = query.sort == column -%}
+<th scope="col" class="{{ cls }}" {% if active %}aria-sort="{{ 'ascending' if query.order == 'asc' else 'descending' }}"{% endif %}>
+  <a class="th-sort {{ 'is-active' if active }}" href="{{ url_for('web.list_students', **query.toggled_sort(column)) }}">
+    {{ label }}{{ icon(("sort-asc" if query.order == "asc" else "sort-desc") if active else "sort", "th-icon") }}
+  </a>
+</th>
+{%- endmacro %}
+
+<header class="page-head reveal">
+  <div>
+    <p class="eyebrow">{{ icon("users") }} Records</p>
+    <h1 class="page-title">Students</h1>
+    <p class="page-sub">{{ total_all }} students on record. Search, filter and export.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-secondary" href="{{ url_for('web.export_csv', **query.args(page=1)) }}" download>{{ icon("download") }}Export CSV</a>
+    <a class="btn btn-primary" href="{{ url_for('web.create_student') }}">{{ icon("user-plus") }}Add student</a>
+  </div>
+</header>
+
+<section class="card card-flush reveal">
+  <form class="toolbar" method="get" action="{{ url_for('web.list_students') }}" role="search" data-filters>
+    <label class="field-search">
+      <span class="sr-only">Search students</span>
+      {{ icon("search") }}
+      <input type="search" name="q" value="{{ query.q }}" placeholder="Search name, roll number, course or email" autocomplete="off">
+    </label>
+    <label class="select">
+      <span class="sr-only">Course</span>
+      <select name="course" data-autosubmit>
+        <option value="">All courses</option>
+        {% for c in courses %}<option value="{{ c }}" {{ "selected" if c == query.course }}>{{ c }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="select select-sm">
+      <span class="sr-only">Year</span>
+      <select name="year" data-autosubmit>
+        <option value="">All years</option>
+        {% for y in years %}<option value="{{ y }}" {{ "selected" if y == query.year }}>Year {{ y }}</option>{% endfor %}
+      </select>
+    </label>
+    {% if query.sort != "roll_number" %}<input type="hidden" name="sort" value="{{ query.sort }}">{% endif %}
+    {% if query.order != "asc" %}<input type="hidden" name="order" value="{{ query.order }}">{% endif %}
+    {% if query.per_page != 10 %}<input type="hidden" name="per_page" value="{{ query.per_page }}">{% endif %}
+    <button class="btn btn-secondary" type="submit">{{ icon("filter") }}Apply</button>
+  </form>
+
+  {% if query.is_filtered %}
+  <div class="filter-bar">
+    <span class="muted small">{{ page.total }} of {{ total_all }} match</span>
+    {% if query.q %}<a class="filter-chip" href="{{ url_for('web.list_students', **query.args(q='', page=1)) }}">“{{ query.q }}” {{ icon("x") }}<span class="sr-only">Remove search</span></a>{% endif %}
+    {% if query.course %}<a class="filter-chip" href="{{ url_for('web.list_students', **query.args(course='', page=1)) }}">{{ query.course }} {{ icon("x") }}<span class="sr-only">Remove course filter</span></a>{% endif %}
+    {% if query.year %}<a class="filter-chip" href="{{ url_for('web.list_students', **query.args(year=None, page=1)) }}">Year {{ query.year }} {{ icon("x") }}<span class="sr-only">Remove year filter</span></a>{% endif %}
+    <a class="link small" href="{{ url_for('web.list_students') }}">Clear all</a>
+  </div>
+  {% endif %}
+
+  {% if page.items %}
+  <div class="table-wrap">
+    <table class="table">
+      <caption class="sr-only">Students, sorted by {{ query.sort.replace("_", " ") }} {{ "ascending" if query.order == "asc" else "descending" }}</caption>
+      <thead>
+        <tr>
+          {{ sort_header("roll_number", "Roll no.") }}
+          {{ sort_header("name", "Student") }}
+          {{ sort_header("course", "Course") }}
+          {{ sort_header("year", "Year") }}
+          {{ sort_header("created_at", "Added", "col-added") }}
+          <th scope="col" class="right"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in page.items %}
+        <tr>
+          <td data-label="Roll no."><code class="mono roll">{{ s.roll_number }}</code></td>
+          <td data-label="Student" class="cell-student">
+            <a class="person" href="{{ url_for('web.student_detail', student_id=s.id) }}">
+              {{ avatar(s.name, "sm") }}
+              <span class="person-text"><span class="person-name">{{ s.name }}</span><span class="person-sub">{{ s.email }}</span></span>
+            </a>
+          </td>
+          <td data-label="Course">{{ course_tag(s.course) }}</td>
+          <td data-label="Year">{{ year_badge(s.year) }}</td>
+          <td data-label="Added" class="col-added muted"><time datetime="{{ s.created.isoformat() }}" title="{{ s.created_at|datefmt('%d %b %Y, %H:%M UTC') }}">{{ s.created_at|timeago }}</time></td>
+          <td class="right">
+            <div class="row-actions">
+              <a class="icon-btn" href="{{ url_for('web.student_detail', student_id=s.id) }}" aria-label="View {{ s.name }}" title="View">{{ icon("eye") }}</a>
+              <a class="icon-btn" href="{{ url_for('web.edit_student', student_id=s.id) }}" aria-label="Edit {{ s.name }}" title="Edit">{{ icon("pencil") }}</a>
+              {{ delete_form(s) }}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <nav class="pager" aria-label="Pagination">
+    <p class="pager-info">Showing <strong>{{ page.first_index }}–{{ page.last_index }}</strong> of <strong>{{ page.total }}</strong></p>
+    <form class="pager-size" method="get" action="{{ url_for('web.list_students') }}">
+      {% for k, v in query.args(page=1, per_page=10).items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+      <label for="per_page" class="muted small">Rows</label>
+      <span class="select select-xs">
+        <select id="per_page" name="per_page" data-autosubmit>
+          {% for n in per_page_choices %}<option value="{{ n }}" {{ "selected" if n == page.per_page }}>{{ n }}</option>{% endfor %}
+        </select>
+      </span>
+      <noscript><button class="btn btn-secondary btn-sm" type="submit">Go</button></noscript>
+    </form>
+    <div class="pager-pages">
+      {% if page.has_prev %}
+      <a class="icon-btn" href="{{ url_for('web.list_students', **query.args(page=page.page - 1)) }}" aria-label="Previous page" rel="prev">{{ icon("chevron-left") }}</a>
+      {% else %}<span class="icon-btn is-disabled" aria-hidden="true">{{ icon("chevron-left") }}</span>{% endif %}
+      {% for n in page.page_numbers() %}
+        {% if n is none %}<span class="pager-gap" aria-hidden="true">…</span>
+        {% elif n == page.page %}<span class="pager-num is-current" aria-current="page">{{ n }}</span>
+        {% else %}<a class="pager-num" href="{{ url_for('web.list_students', **query.args(page=n)) }}" aria-label="Page {{ n }}">{{ n }}</a>{% endif %}
+      {% endfor %}
+      {% if page.has_next %}
+      <a class="icon-btn" href="{{ url_for('web.list_students', **query.args(page=page.page + 1)) }}" aria-label="Next page" rel="next">{{ icon("chevron-right") }}</a>
+      {% else %}<span class="icon-btn is-disabled" aria-hidden="true">{{ icon("chevron-right") }}</span>{% endif %}
+    </div>
+  </nav>
+
+  {% else %}
+  <div class="empty">
+    <div class="empty-art" aria-hidden="true">{{ icon("search") }}</div>
+    {% if query.is_filtered %}
+    <h2 class="empty-title">No students match these filters</h2>
+    <p class="muted">Try a different search term, or clear the filters to see everyone.</p>
+    <div class="empty-actions">
+      <a class="btn btn-secondary" href="{{ url_for('web.list_students') }}">Clear filters</a>
+      <a class="btn btn-primary" href="{{ url_for('web.create_student') }}">{{ icon("user-plus") }}Add student</a>
+    </div>
+    {% else %}
+    <h2 class="empty-title">No students yet</h2>
+    <p class="muted">Add the first student record to get started.</p>
+    <div class="empty-actions"><a class="btn btn-primary" href="{{ url_for('web.create_student') }}">{{ icon("user-plus") }}Add student</a></div>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

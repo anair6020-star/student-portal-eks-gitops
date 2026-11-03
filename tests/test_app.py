@@ -55,12 +55,14 @@ def test_home_lists_seed_students_and_version(client):
     html = r.get_data(as_text=True)
     assert "Welcome to the Student Portal" in html
     assert "test-123" in html
+    # The full list moved from the dashboard to /students.
+    html = client.get("/students?per_page=100").get_data(as_text=True)
     for s in SEED_STUDENTS:
         assert s["name"] in html
 
 
 def test_search_filters_results(client):
-    html = client.get("/?q=diya").get_data(as_text=True)
+    html = client.get("/students?q=diya").get_data(as_text=True)
     assert "Diya Patel" in html
     assert "Aarav Sharma" not in html
 

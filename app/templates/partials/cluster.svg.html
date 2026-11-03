@@ -1,0 +1,16 @@
+{#- Isometric illustration of the EKS deployment: this pod, a replica, PostgreSQL, and a new image arriving from ECR. Generated geometry; colours come from CSS tokens. -#}
+<svg class="iso" viewBox="30 20 280 240" role="img" aria-labelledby="iso-title">
+<title id="iso-title">Kubernetes cluster with two app pods, a database and a new image arriving</title>
+<defs><radialGradient id="iso-glow" cx="50%" cy="50%" r="50%"><stop offset="0%" class="glow-stop-a"/><stop offset="100%" class="glow-stop-b"/></radialGradient></defs>
+<ellipse class="iso-glow" cx="145" cy="168" rx="70" ry="40" fill="url(#iso-glow)"/>
+<g class="iso-platform"><polygon class="plat-l" points="45.3,176.0 170.0,248.0 170.0,236.0 45.3,164.0"/><polygon class="plat-r" points="294.7,176.0 170.0,248.0 170.0,236.0 294.7,164.0"/><polygon class="plat-t" points="170.0,92.0 294.7,164.0 170.0,236.0 45.3,164.0"/>
+<g class="plat-grid"><line x1="190.8" y1="104.0" x2="66.1" y2="176.0"/><line x1="149.2" y1="104.0" x2="273.9" y2="176.0"/><line x1="211.6" y1="116.0" x2="86.9" y2="188.0"/><line x1="128.4" y1="116.0" x2="253.1" y2="188.0"/><line x1="232.4" y1="128.0" x2="107.6" y2="200.0"/><line x1="107.6" y1="128.0" x2="232.4" y2="200.0"/><line x1="253.1" y1="140.0" x2="128.4" y2="212.0"/><line x1="86.9" y1="140.0" x2="211.6" y2="212.0"/><line x1="273.9" y1="152.0" x2="149.2" y2="224.0"/><line x1="66.1" y1="152.0" x2="190.8" y2="224.0"/></g></g>
+<polygon class="pod-shadow" points="170.0,110.0 209.5,132.8 170.0,155.6 130.5,132.8"/>
+<polygon class="pod-shadow" points="224.0,141.2 261.5,162.8 224.0,184.4 186.6,162.8"/>
+<polygon class="pod-shadow" points="145.1,155.6 182.5,177.2 145.1,198.8 107.6,177.2"/>
+<g class="iso-pod iso-pod-db"><polygon class="iso-db-l" points="138.8,131.6 170.0,149.6 170.0,123.2 138.8,105.2"/><polygon class="iso-db-r" points="201.2,131.6 170.0,149.6 170.0,123.2 201.2,105.2"/><polygon class="iso-db-t" points="170.0,87.2 201.2,105.2 170.0,123.2 138.8,105.2"/><polyline class="db-band" points="138.8,122.4 170.0,140.4 201.2,122.4"/><polyline class="db-band" points="138.8,113.1 170.0,131.1 201.2,113.1"/></g>
+<g class="iso-pod iso-pod-replica"><polygon class="iso-replica-l" points="194.9,161.6 224.0,178.4 224.0,144.8 194.9,128.0"/><polygon class="iso-replica-r" points="253.1,161.6 224.0,178.4 224.0,144.8 253.1,128.0"/><polygon class="iso-replica-t" points="224.0,111.2 253.1,128.0 224.0,144.8 194.9,128.0"/></g>
+<g class="iso-pod iso-pod-self"><polygon class="iso-self-l" points="116.0,176.0 145.1,192.8 145.1,159.2 116.0,142.4"/><polygon class="iso-self-r" points="174.2,176.0 145.1,192.8 145.1,159.2 174.2,142.4"/><polygon class="iso-self-t" points="145.1,125.6 174.2,142.4 145.1,159.2 116.0,142.4"/></g>
+<line class="iso-trail" x1="224.0" y1="123.2" x2="224.0" y2="75.2"/>
+<g class="iso-pod iso-pod-image"><polygon class="iso-image-l" points="201.2,72.8 224.0,86.0 224.0,59.6 201.2,46.4"/><polygon class="iso-image-r" points="246.9,72.8 224.0,86.0 224.0,59.6 246.9,46.4"/><polygon class="iso-image-t" points="224.0,33.2 246.9,46.4 224.0,59.6 201.2,46.4"/></g>
+</svg>

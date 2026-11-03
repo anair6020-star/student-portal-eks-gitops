@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+{% from "partials/ui.html" import avatar, year_badge, course_tag, delete_form %}
+{% block title %}{{ student.name }}{% endblock %}
+{% block content %}
+<nav class="crumbs reveal" aria-label="Breadcrumb">
+  <a href="{{ url_for('web.list_students') }}">{{ icon("arrow-left") }}Students</a>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">{{ student.roll_number }}</span>
+</nav>
+
+<section class="card profile reveal">
+  <div class="profile-cover" aria-hidden="true"></div>
+  <div class="profile-main">
+    {{ avatar(student.name, "xl") }}
+    <div class="profile-id">
+      <h1 class="page-title">{{ student.name }}</h1>
+      <p class="profile-meta">
+        <code class="mono roll">{{ student.roll_number }}</code>
+        {{ course_tag(student.course) }}
+        {{ year_badge(student.year) }}
+      </p>
+    </div>
+    <div class="page-actions">
+      <a class="btn btn-secondary" href="{{ url_for('web.edit_student', student_id=student.id) }}">{{ icon("pencil") }}Edit</a>
+      {{ delete_form(student, label=true) }}
+    </div>
+  </div>
+</section>
+
+<section class="grid-2">
+  <article class="card reveal" aria-labelledby="details-title">
+    <header class="card-head"><h2 id="details-title" class="card-title">Details</h2></header>
+    <dl class="facts">
+      <div><dt>{{ icon("hash") }}Roll number</dt><dd class="mono">{{ student.roll_number }}</dd></div>
+      <div><dt>{{ icon("user") }}Full name</dt><dd>{{ student.name }}</dd></div>
+      <div><dt>{{ icon("mail") }}Email</dt><dd><a class="link" href="mailto:{{ student.email }}">{{ student.email }}</a></dd></div>
+      <div><dt>{{ icon("book") }}Course</dt><dd><a class="link" href="{{ url_for('web.list_students', course=student.course) }}">{{ student.course }}</a></dd></div>
+      <div><dt>{{ icon("cap") }}Year of study</dt><dd>{{ student.year }} of 6</dd></div>
+    </dl>
+  </article>
+
+  <article class="card reveal" aria-labelledby="record-title">
+    <header class="card-head"><h2 id="record-title" class="card-title">Record</h2></header>
+    <ol class="timeline" role="list">
+      <li>
+        <span class="timeline-dot"></span>
+        <p class="timeline-title">Record created</p>
+        <p class="muted small"><time datetime="{{ student.created.isoformat() }}">{{ student.created_at|datefmt("%d %b %Y, %H:%M UTC") }}</time>{% set ago = student.created_at|timeago %}{% if "ago" in ago %} · {{ ago }}{% endif %}</p>
+      </li>
+      <li>
+        <span class="timeline-dot timeline-dot-live"></span>
+        <p class="timeline-title">Served from Kubernetes</p>
+        <p class="muted small">Build <span class="mono">{{ app_version }}</span> on pod <span class="mono">{{ pod_name }}</span></p>
+      </li>
+    </ol>
+    <div class="progress" aria-label="Year {{ student.year }} of 6">
+      {% for y in range(1, 7) %}<span class="progress-step {{ 'is-done' if y <= student.year }}"></span>{% endfor %}
+    </div>
+    <p class="muted small">Year {{ student.year }} of 6</p>
+  </article>
+</section>
+{% endblock %}
