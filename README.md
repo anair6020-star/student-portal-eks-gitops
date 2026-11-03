@@ -39,26 +39,48 @@ Key design decisions:
 
 ## Application features
 
-![Student Information System home page](docs/screenshot.png)
+![Student Portal dashboard](docs/screenshot.png)
 
 | Feature | Where |
 |---|---|
-| List students and **search** by name, roll number, course or email | `/` and `GET /api/students?q=` |
-| **Add** a student with server-side validation and duplicate roll-number check | `/students/new`, `POST /api/students` |
-| **Edit** a student | `/students/<id>/edit` |
-| **Delete** a student | Delete button, `DELETE /api/students/<id>` |
+| **Dashboard**: KPI cards, students-per-course bars, year donut, release pipeline, recent activity (charts are server-rendered inline SVG, no chart library) | `/` |
+| **Students list**: server-side search, course and year filters, sortable columns, pagination with page size, empty states | `/students` |
+| **CSV export** of the current filtered list (formula-safe cells) | `/students/export.csv` |
+| **Student detail** page | `/students/<id>` |
+| **Add / edit** with inline validation, an error summary, preserved input and a live preview | `/students/new`, `/students/<id>/edit` |
+| **Delete** with an accessible `<dialog>` confirmation (no browser `confirm()`) | Delete buttons |
+| **Toast notifications** for flash messages (`aria-live`) | Every page |
+| Light and dark themes (follows the OS, toggle remembered), keyboard navigation, reduced-motion support, mobile layout at 375px | Every page |
+| Friendly **404 / 500** pages; JSON errors on API paths | Any missing route |
+| Original JSON API, unchanged | `GET/POST /api/students`, `GET/DELETE /api/students/<id>` |
+| **Versioned API** with pagination envelope (`?q=&course=&year=&sort=&order=&page=&per_page=`), `PUT`, and `{"error": {"code", "message", "fields"}}` errors | `/api/v1/students`, `/api/v1/students/<id>` |
+| Dashboard numbers as JSON | `GET /api/v1/stats` |
 | Health and version endpoints for Kubernetes probes and demos | `/healthz` (liveness), `/readyz` (DB check), `/version` |
 
-The page footer shows the **running version (git SHA)** and the **pod name**, which makes the end-to-end demo easy to see: after a push, the footer changes to the new SHA, and refreshing shows requests spread across pods.
+Security and operations: a self-only Content-Security-Policy (fonts, icons and scripts are all served from `app/static/`, nothing from a CDN), `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, CSRF on every form, and structured JSON logs with an `X-Request-ID` that is accepted or generated and echoed back.
 
-Tech stack: Python 3.12, Flask 3, SQLAlchemy, Flask-WTF (CSRF protection), Gunicorn, PostgreSQL 17 (in-cluster) or SQLite (local/tests).
+<details>
+<summary>More screenshots (light, dark, mobile)</summary>
+
+| | |
+|---|---|
+| ![Dashboard, dark](docs/screenshots/dashboard-desktop-dark.png) | ![Students, light](docs/screenshots/students-desktop-light.png) |
+| ![Students, dark](docs/screenshots/students-desktop-dark.png) | ![Form with validation errors](docs/screenshots/form-errors-desktop-light.png) |
+| ![Student detail, dark](docs/screenshots/detail-desktop-dark.png) | ![Delete confirmation dialog](docs/screenshots/dialog-desktop-light.png) |
+| ![Dashboard on a phone, light](docs/screenshots/dashboard-mobile-light.png) | ![Students on a phone, dark](docs/screenshots/students-mobile-dark.png) |
+
+</details>
+
+The sidebar deployment badge and the page footer show the **running version (git SHA)** and the **pod name**, which makes the end-to-end demo easy to see: after a push, the footer changes to the new SHA, and refreshing shows requests spread across pods.
+
+Tech stack: Python 3.12, Flask 3, SQLAlchemy, Flask-WTF (CSRF protection), Gunicorn, PostgreSQL 17 (in-cluster) or SQLite (local/tests). The UI is server-rendered Jinja with a small vanilla-JS file and no build step; Inter and JetBrains Mono are self-hosted.
 
 ## Repository layout
 
 ```
 .
-├── app/                     Flask application (routes, models, templates, CSS)
-├── tests/                   pytest unit tests (13 tests)
+├── app/                     Flask app: routes/ (thin) → services/ (logic) → models; templates, static
+├── tests/                   pytest tests (66 tests, ~99% coverage)
 ├── Dockerfile               Multi-stage, non-root image
 ├── gunicorn.conf.py         Production server settings
 ├── k8s/                     ← GitOps deployment config watched by Argo CD
@@ -80,7 +102,7 @@ Tech stack: Python 3.12, Flask 3, SQLAlchemy, Flask-WTF (CSRF protection), Gunic
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
-make test          # ruff-clean code, 13 tests
+make test          # ruff-clean code, 66 tests
 make run           # http://localhost:8080 (SQLite in /tmp)
 
 # Or in Docker

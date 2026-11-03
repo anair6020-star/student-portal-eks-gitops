@@ -165,7 +165,7 @@ Add the three values it prints as **repository variables**: GitHub → Settings 
 Run the pipeline the first time: GitHub → **Actions → CI/CD → Run workflow** (on `main`).
 
 Expected result:
-1. `test` passes (lint + 13 tests).
+1. `test` passes (lint + 66 tests).
 2. `build-and-push` builds, smoke-tests and pushes `<registry>/student-portal:<sha>`.
 3. `update-manifest` commits `deploy: student-portal <sha>` changing `k8s/kustomization.yaml`.
 

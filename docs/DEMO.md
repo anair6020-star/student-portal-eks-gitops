@@ -5,7 +5,7 @@ Developer → GitHub → GitHub Actions → Docker image → Amazon ECR → Git 
 ```
 
 Before you start, open four windows:
-1. **Browser tab: the app** (`http://<load-balancer-dns>`). Note the footer: `Version <sha>` and `Served by pod ...`.
+1. **Browser tab: the app** (`http://<load-balancer-dns>`). Note the sidebar **Live deployment** badge and the footer: `Version <sha>` and `Served by pod ...`. The dashboard's **Release pipeline** card shows the same build and pod.
 2. **Browser tab: GitHub → Actions.**
 3. **Browser tab: Argo CD UI** (`https://localhost:8443` through the SSH tunnel).
 4. **Terminal on EC2** with a watch running:
@@ -21,19 +21,19 @@ kubectl -n student-portal get deploy student-portal -o jsonpath='{.spec.template
 
 ## Demo A: application change (full pipeline)
 
-1. Change the heading in `app/templates/index.html`:
+1. Change the dashboard heading in `app/templates/dashboard.html`:
    ```html
-   <h1>Welcome to the Student Portal</h1>
+   <h1 id="hero-title" class="hero-title">Welcome to the Student Portal</h1>
    ```
    to
    ```html
-   <h1>Welcome to the Student Portal - Batch 2026</h1>
+   <h1 id="hero-title" class="hero-title">Welcome to the Student Portal - Batch 2026</h1>
    ```
    (Keep the words "Welcome to the Student Portal": the unit test and the CI smoke test check for them. If you change those words, update `tests/test_app.py` and the smoke test too, which is a good way to show the tests guarding the release.)
 
 2. Commit and push:
    ```bash
-   git add app/templates/index.html
+   git add app/templates/dashboard.html
    git commit -m "feat: show batch year in heading"
    git push origin main
    ```
