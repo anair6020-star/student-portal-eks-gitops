@@ -2,19 +2,15 @@
 {% from "partials/icons.html" import icon %}
 {% from "partials/ui.html" import avatar %}
 {% block title %}Dashboard{% endblock %}
+{% from "partials/banner.html" import banner %}
+{% block banner %}
+{% call banner("Welcome to the Student Portal", [("Dashboard", None)], "Student records and deployment status for the Student Information System.", kicker="CSA3004 · Cloud Native Orchestration") %}
+  <a class="btn btn-light" href="{{ url_for('web.list_students') }}">{{ icon("users") }}View students</a>
+  <a class="btn btn-gold" href="{{ url_for('web.create_student') }}">{{ icon("plus") }}Add student</a>
+{% endcall %}
+{% endblock %}
 {% block content %}
 
-<header class="page-head">
-  <div>
-    <p class="page-kicker">CSA3004 · Cloud Native Orchestration</p>
-    <h1 class="page-title">Welcome to the Student Portal</h1>
-    <p class="page-sub">Overview of student records and the current deployment.</p>
-  </div>
-  <div class="page-actions">
-    <a class="btn btn-secondary" href="{{ url_for('web.list_students') }}">{{ icon("users") }}View students</a>
-    <a class="btn btn-primary" href="{{ url_for('web.create_student') }}">{{ icon("plus") }}Add student</a>
-  </div>
-</header>
 
 <section class="kpis" aria-label="Key figures">
   {% set kpis = [

@@ -50,7 +50,7 @@ Key design decisions:
 | **Add / edit** with inline validation, an error summary, preserved input and a live preview | `/students/new`, `/students/<id>/edit` |
 | **Delete** with an accessible `<dialog>` confirmation (no browser `confirm()`) | Delete buttons |
 | **Toast notifications** for flash messages (`aria-live`) | Every page |
-| Clean admin layout (navy sidebar, one blue accent), keyboard navigation, visible focus, reduced-motion support, mobile layout at 375px | Every page |
+| University-portal layout (info bar, masthead, menu bar, title banner, multi-column footer) in navy and gold, keyboard navigation, visible focus, mobile layout at 375px | Every page |
 | Friendly **404 / 500** pages; JSON errors on API paths | Any missing route |
 | Original JSON API, unchanged | `GET/POST /api/students`, `GET/DELETE /api/students/<id>` |
 | **Versioned API** with pagination envelope (`?q=&course=&year=&sort=&order=&page=&per_page=`), `PUT`, and `{"error": {"code", "message", "fields"}}` errors | `/api/v1/students`, `/api/v1/students/<id>` |
@@ -72,7 +72,7 @@ Security and operations: a self-only Content-Security-Policy (fonts, icons and s
 
 The sidebar deployment badge and the page footer show the **running version (git SHA)** and the **pod name**, which makes the end-to-end demo easy to see: after a push, the footer changes to the new SHA, and refreshing shows requests spread across pods.
 
-Tech stack: Python 3.12, Flask 3, SQLAlchemy, Flask-WTF (CSRF protection), Gunicorn, PostgreSQL 17 (in-cluster) or SQLite (local/tests). The UI is server-rendered Jinja with a small vanilla-JS file and no build step; Inter and JetBrains Mono are self-hosted.
+Tech stack: Python 3.12, Flask 3, SQLAlchemy, Flask-WTF (CSRF protection), Gunicorn, PostgreSQL 17 (in-cluster) or SQLite (local/tests). The UI is server-rendered Jinja with a small vanilla-JS file and no build step; Inter, Source Serif 4 and JetBrains Mono are self-hosted.
 
 ## Repository layout
 

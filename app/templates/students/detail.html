@@ -2,18 +2,17 @@
 {% from "partials/icons.html" import icon %}
 {% from "partials/ui.html" import avatar, year_badge, course_tag, delete_form %}
 {% block title %}{{ student.name }}{% endblock %}
+{% from "partials/banner.html" import banner %}
+{% block banner %}
+{{ banner("Student profile", [("Students", url_for("web.list_students")), (student.roll_number, None)]) }}
+{% endblock %}
 {% block content %}
-<nav class="crumbs" aria-label="Breadcrumb">
-  <a href="{{ url_for('web.list_students') }}">{{ icon("arrow-left") }}Students</a>
-  <span aria-hidden="true">/</span>
-  <span aria-current="page">{{ student.roll_number }}</span>
-</nav>
 
 <section class="card profile">
   <div class="profile-main">
     {{ avatar(student.name, "xl") }}
     <div class="profile-id">
-      <h1 class="page-title">{{ student.name }}</h1>
+      <h2 class="profile-name">{{ student.name }}</h2>
       <p class="profile-meta">
         <code class="mono roll">{{ student.roll_number }}</code>
         {{ course_tag(student.course) }}

@@ -3,21 +3,16 @@
 {% from "partials/ui.html" import avatar %}
 {% set editing = mode == "edit" %}
 {% block title %}{{ "Edit " ~ student.name if editing else "Add student" }}{% endblock %}
+{% from "partials/banner.html" import banner %}
+{% block banner %}
+{% if editing %}
+{{ banner("Edit student", [("Students", url_for("web.list_students")), (student.name, url_for("web.student_detail", student_id=student.id)), ("Edit", None)], "Update the details below and save your changes.") }}
+{% else %}
+{{ banner("Add a student", [("Students", url_for("web.list_students")), ("Add student", None)], "Fill in the details below. All fields are required.") }}
+{% endif %}
+{% endblock %}
 {% block content %}
-<nav class="crumbs" aria-label="Breadcrumb">
-  {% if editing %}
-  <a href="{{ url_for('web.student_detail', student_id=student.id) }}">{{ icon("arrow-left") }}{{ student.name }}</a>
-  {% else %}
-  <a href="{{ url_for('web.list_students') }}">{{ icon("arrow-left") }}Students</a>
-  {% endif %}
-</nav>
 
-<header class="page-head">
-  <div>
-    <h1 class="page-title">{{ "Edit student" if editing else "Add a student" }}</h1>
-    <p class="page-sub">{{ "Update the details below and save." if editing else "Fill in the details. All fields are required." }}</p>
-  </div>
-</header>
 
 <section class="form-layout">
   <form class="card form" method="post" novalidate>

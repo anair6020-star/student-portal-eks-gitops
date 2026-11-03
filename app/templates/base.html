@@ -1,12 +1,13 @@
 {% from "partials/icons.html" import icon %}
-{%- set section = "students" if request.endpoint and request.endpoint.startswith("web.") and request.endpoint not in ("web.index", "web.create_student") else ("new" if request.endpoint == "web.create_student" else "dashboard") -%}
+{%- set section = "students" if request.endpoint and request.endpoint.startswith("web.") and request.endpoint not in ("web.index", "web.create_student") else ("new" if request.endpoint == "web.create_student" else "home") -%}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Student Portal{% endblock %} · Student Information System</title>
+  <title>{% block title %}Student Portal{% endblock %} · Student Information System · D Y Patil International University</title>
   <link rel="preload" href="{{ url_for('static', filename='fonts/InterVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url_for('static', filename='fonts/SourceSerif4Variable.woff2') }}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
@@ -14,66 +15,93 @@
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
 
-  {% macro brand() -%}
-  <a class="brand" href="{{ url_for('web.index') }}" aria-label="Student Portal home">
-    <span class="brand-mark" aria-hidden="true">{{ icon("cap") }}</span>
-    <span class="brand-text">
-      <span class="brand-name">Student Portal</span>
-      <span class="brand-sub">Information System</span>
-    </span>
-  </a>
-  {%- endmacro %}
-
-  {% set nav = [
-    ("dashboard", url_for("web.index"), "dashboard", "Dashboard"),
-    ("students", url_for("web.list_students"), "users", "Students"),
-    ("new", url_for("web.create_student"), "user-plus", "Add student"),
-  ] %}
-
-  <div class="shell">
-    <aside class="sidebar" aria-label="Sidebar">
-      {{ brand() }}
-      <nav class="nav" aria-label="Primary">
-        <span class="nav-label">Menu</span>
-        {% for key, href, ico, label in nav %}
-        <a class="nav-link {{ 'is-active' if section == key }}" href="{{ href }}" {% if section == key %}aria-current="page"{% endif %}>
-          {{ icon(ico) }}<span>{{ label }}</span>
-        </a>
-        {% endfor %}
-      </nav>
-
-      <div class="deploy" data-testid="deploy-badge">
-        <p class="deploy-head"><span class="status-dot" aria-hidden="true"></span>Deployment</p>
-        <dl class="deploy-meta">
-          <div><dt>Version</dt><dd class="mono">{{ app_version }}</dd></div>
-          <div><dt>Pod</dt><dd class="mono" title="{{ pod_name }}">{{ pod_name }}</dd></div>
-        </dl>
-      </div>
-    </aside>
-
-    <header class="topbar">
-      <div class="topbar-row">
-        {{ brand() }}
-        <span class="topbar-version mono" title="Version {{ app_version }} on pod {{ pod_name }}">{{ app_version }}</span>
-      </div>
-      <nav class="tabs" aria-label="Primary">
-        {% for key, href, ico, label in nav %}
-        <a class="tab {{ 'is-active' if section == key }}" href="{{ href }}" {% if section == key %}aria-current="page"{% endif %}>{{ label }}</a>
-        {% endfor %}
-      </nav>
-    </header>
-
-    <main id="main" class="main" tabindex="-1">
-      <div class="page">
-        {% block content %}{% endblock %}
-      </div>
-      <footer class="footer">
-        <span>Version <strong class="mono" data-testid="app-version">{{ app_version }}</strong></span>
-        <span>Served by pod <code class="mono">{{ pod_name }}</code></span>
-        <span class="footer-stack">Docker · Amazon ECR · Amazon EKS · GitHub Actions · Argo CD</span>
-      </footer>
-    </main>
+  <div class="infobar">
+    <div class="container infobar-inner">
+      <span class="infobar-item">{{ icon("home") }}Akurdi, Pune, Maharashtra</span>
+      <span class="infobar-item infobar-course">CSA3004 · Cloud Native Orchestration</span>
+      <span class="infobar-item infobar-build"><span class="status-dot" aria-hidden="true"></span>Build <span class="mono">{{ app_version }}</span></span>
+    </div>
   </div>
+
+  <header class="masthead">
+    <div class="container masthead-inner">
+      <a class="brand" href="{{ url_for('web.index') }}" aria-label="Student Information System home">
+        {#- Original crest-style mark for this project; not the university's official logo. #}
+        <svg class="crest" viewBox="0 0 48 56" aria-hidden="true">
+          <path class="crest-shield" d="M24 2 44 8v18c0 13-8.5 22.5-20 28C12.5 48.5 4 39 4 26V8Z"/>
+          <path class="crest-rim" d="M24 6.5 40 11.3V26c0 10.6-6.6 18.5-16 23.3C14.6 44.5 8 36.6 8 26V11.3Z"/>
+          <path class="crest-book" d="M14 22.5c3.6-1.4 7-1 10 1.2 3-2.2 6.4-2.6 10-1.2v13c-3.6-1.4-7-1-10 1.2-3-2.2-6.4-2.6-10-1.2Z"/>
+          <path class="crest-spine" d="M24 23.7v13.2"/>
+          <path class="crest-star" d="m24 11.5 1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5Z"/>
+        </svg>
+        <span class="brand-text">
+          <span class="brand-name">D Y Patil International University</span>
+          <span class="brand-sub">Student Information System</span>
+        </span>
+      </a>
+      <div class="masthead-meta" data-testid="deploy-badge">
+        <span class="meta-label">Served by pod</span>
+        <span class="meta-value mono" title="{{ pod_name }}">{{ pod_name }}</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="navbar" aria-label="Primary">
+    <div class="container navbar-inner">
+      {% for key, href, label in [
+        ("home", url_for("web.index"), "Home"),
+        ("students", url_for("web.list_students"), "Students"),
+        ("new", url_for("web.create_student"), "Add Student"),
+      ] %}
+      <a class="navbar-link {{ 'is-active' if section == key }}" href="{{ href }}" {% if section == key %}aria-current="page"{% endif %}>{{ label }}</a>
+      {% endfor %}
+      <a class="navbar-link navbar-api" href="{{ url_for('api_v1.get_stats') }}">API</a>
+    </div>
+  </nav>
+
+  {% block banner %}{% endblock %}
+
+  <main id="main" class="main" tabindex="-1">
+    <div class="container page">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <section>
+        <h2 class="footer-title">D Y Patil International University</h2>
+        <p>Sector 29, Nigdi Pradhikaran,<br>Akurdi, Pune, Maharashtra 411044</p>
+      </section>
+      <section>
+        <h2 class="footer-title">Quick links</h2>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('web.index') }}">Home</a></li>
+          <li><a href="{{ url_for('web.list_students') }}">Students</a></li>
+          <li><a href="{{ url_for('web.create_student') }}">Add student</a></li>
+          <li><a href="{{ url_for('web.export_csv') }}">Export CSV</a></li>
+        </ul>
+      </section>
+      <section>
+        <h2 class="footer-title">Deployment</h2>
+        <dl class="footer-facts">
+          <div><dt>Version</dt><dd><strong class="mono" data-testid="app-version">{{ app_version }}</strong></dd></div>
+          <div><dt>Pod</dt><dd><code class="mono">{{ pod_name }}</code></dd></div>
+          <div><dt>Stack</dt><dd>Docker · Amazon ECR · Amazon EKS · GitHub Actions · Argo CD</dd></div>
+        </dl>
+      </section>
+      <section>
+        <h2 class="footer-title">About this project</h2>
+        <p>Course project for CSA3004 Cloud Native Orchestration: a student records application deployed to Amazon EKS through a GitOps pipeline.</p>
+      </section>
+    </div>
+    <div class="footer-bottom">
+      <div class="container footer-bottom-inner">
+        <span>Student Information System · Course project</span>
+        <span>Not an official university website</span>
+      </div>
+    </div>
+  </footer>
 
   <div class="toasts" role="region" aria-label="Notifications" aria-live="polite">
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -90,7 +118,7 @@
   <dialog class="dialog" id="confirm-delete" aria-labelledby="confirm-delete-title" aria-describedby="confirm-delete-desc">
     <form method="dialog" class="dialog-body">
       <h2 id="confirm-delete-title" class="dialog-title">Delete <span data-delete-name>this student</span>?</h2>
-      <p id="confirm-delete-desc" class="muted">This permanently removes the record. This action cannot be undone.</p>
+      <p id="confirm-delete-desc" class="muted">This permanently removes the student record. This action cannot be undone.</p>
       <div class="dialog-actions">
         <button class="btn btn-secondary" value="cancel" autofocus>Cancel</button>
         <button class="btn btn-danger" value="confirm">Delete</button>

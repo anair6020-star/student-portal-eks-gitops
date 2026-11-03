@@ -2,6 +2,13 @@
 {% from "partials/icons.html" import icon %}
 {% from "partials/ui.html" import avatar, year_badge, course_tag, delete_form %}
 {% block title %}Students{% endblock %}
+{% from "partials/banner.html" import banner %}
+{% block banner %}
+{% call banner("Students", [("Students", None)], total_all ~ " students on record. Search, filter and export the list.") %}
+  <a class="btn btn-secondary" href="{{ url_for('web.export_csv', **query.args(page=1)) }}" download>{{ icon("download") }}Export CSV</a>
+  <a class="btn btn-primary" href="{{ url_for('web.create_student') }}">{{ icon("user-plus") }}Add student</a>
+{% endcall %}
+{% endblock %}
 {% block content %}
 
 {% macro sort_header(column, label, cls="") -%}
@@ -13,16 +20,6 @@
 </th>
 {%- endmacro %}
 
-<header class="page-head">
-  <div>
-    <h1 class="page-title">Students</h1>
-    <p class="page-sub">{{ total_all }} students on record. Search, filter and export.</p>
-  </div>
-  <div class="page-actions">
-    <a class="btn btn-secondary" href="{{ url_for('web.export_csv', **query.args(page=1)) }}" download>{{ icon("download") }}Export CSV</a>
-    <a class="btn btn-primary" href="{{ url_for('web.create_student') }}">{{ icon("user-plus") }}Add student</a>
-  </div>
-</header>
 
 <section class="card card-flush">
   <form class="toolbar" method="get" action="{{ url_for('web.list_students') }}" role="search" data-filters>
