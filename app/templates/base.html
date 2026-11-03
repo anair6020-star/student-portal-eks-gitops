@@ -5,13 +5,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
-  <title>{% block title %}Student Portal{% endblock %} · CSA3004 Student Information System</title>
+  <title>{% block title %}Student Portal{% endblock %} · Student Information System</title>
   <link rel="preload" href="{{ url_for('static', filename='fonts/InterVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
-  {#- Runs before first paint so the saved theme never flashes. External file: the CSP forbids inline scripts. #}
-  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </head>
 <body>
@@ -19,22 +16,12 @@
 
   {% macro brand() -%}
   <a class="brand" href="{{ url_for('web.index') }}" aria-label="Student Portal home">
-    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-      <polygon class="bm-t" points="16,3 28,10 16,17 4,10"/>
-      <polygon class="bm-l" points="4,10 16,17 16,29 4,22"/>
-      <polygon class="bm-r" points="28,10 16,17 16,29 28,22"/>
-    </svg>
+    <span class="brand-mark" aria-hidden="true">{{ icon("cap") }}</span>
     <span class="brand-text">
       <span class="brand-name">Student Portal</span>
-      <span class="brand-sub">CSA3004 · Cloud Native</span>
+      <span class="brand-sub">Information System</span>
     </span>
   </a>
-  {%- endmacro %}
-
-  {% macro theme_toggle() -%}
-  <button class="icon-btn theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme" title="Switch theme">
-    {{ icon("sun", "theme-icon-light") }}{{ icon("moon", "theme-icon-dark") }}
-  </button>
   {%- endmacro %}
 
   {% set nav = [
@@ -47,7 +34,7 @@
     <aside class="sidebar" aria-label="Sidebar">
       {{ brand() }}
       <nav class="nav" aria-label="Primary">
-        <span class="nav-label">Workspace</span>
+        <span class="nav-label">Menu</span>
         {% for key, href, ico, label in nav %}
         <a class="nav-link {{ 'is-active' if section == key }}" href="{{ href }}" {% if section == key %}aria-current="page"{% endif %}>
           {{ icon(ico) }}<span>{{ label }}</span>
@@ -55,36 +42,23 @@
         {% endfor %}
       </nav>
 
-      <div class="sidebar-foot">
-        <div class="deploy" data-testid="deploy-badge">
-          <div class="deploy-head">
-            <span class="pulse" aria-hidden="true"></span>
-            <span>Live deployment</span>
-          </div>
-          <dl class="deploy-meta">
-            <div><dt>Build</dt><dd class="mono">{{ app_version }}</dd></div>
-            <div><dt>Pod</dt><dd class="mono" title="{{ pod_name }}">{{ pod_name }}</dd></div>
-          </dl>
-          <p class="deploy-flow">GitHub Actions → ECR → Argo CD → EKS</p>
-        </div>
-        <div class="sidebar-tools">
-          <span class="muted small">Appearance</span>
-          {{ theme_toggle() }}
-        </div>
+      <div class="deploy" data-testid="deploy-badge">
+        <p class="deploy-head"><span class="status-dot" aria-hidden="true"></span>Deployment</p>
+        <dl class="deploy-meta">
+          <div><dt>Version</dt><dd class="mono">{{ app_version }}</dd></div>
+          <div><dt>Pod</dt><dd class="mono" title="{{ pod_name }}">{{ pod_name }}</dd></div>
+        </dl>
       </div>
     </aside>
 
     <header class="topbar">
       <div class="topbar-row">
         {{ brand() }}
-        <div class="topbar-tools">
-          <span class="chip chip-live mono" title="Build {{ app_version }} on pod {{ pod_name }}"><span class="pulse" aria-hidden="true"></span>{{ app_version }}</span>
-          {{ theme_toggle() }}
-        </div>
+        <span class="topbar-version mono" title="Version {{ app_version }} on pod {{ pod_name }}">{{ app_version }}</span>
       </div>
       <nav class="tabs" aria-label="Primary">
         {% for key, href, ico, label in nav %}
-        <a class="tab {{ 'is-active' if section == key }}" href="{{ href }}" {% if section == key %}aria-current="page"{% endif %}>{{ icon(ico) }}<span>{{ label }}</span></a>
+        <a class="tab {{ 'is-active' if section == key }}" href="{{ href }}" {% if section == key %}aria-current="page"{% endif %}>{{ label }}</a>
         {% endfor %}
       </nav>
     </header>
@@ -94,8 +68,8 @@
         {% block content %}{% endblock %}
       </div>
       <footer class="footer">
-        <span class="footer-item">{{ icon("commit") }} Version <strong class="mono" data-testid="app-version">{{ app_version }}</strong></span>
-        <span class="footer-item">{{ icon("server") }} Served by pod <code class="mono">{{ pod_name }}</code></span>
+        <span>Version <strong class="mono" data-testid="app-version">{{ app_version }}</strong></span>
+        <span>Served by pod <code class="mono">{{ pod_name }}</code></span>
         <span class="footer-stack">Docker · Amazon ECR · Amazon EKS · GitHub Actions · Argo CD</span>
       </footer>
     </main>
@@ -108,7 +82,6 @@
         {{ icon("check-circle" if category == "success" else "info", "toast-icon") }}
         <p class="toast-msg">{{ message }}</p>
         <button class="icon-btn icon-btn-sm" type="button" data-toast-close aria-label="Dismiss notification">{{ icon("x") }}</button>
-        <span class="toast-timer" aria-hidden="true"></span>
       </div>
       {% endfor %}
     {% endwith %}
@@ -116,12 +89,11 @@
 
   <dialog class="dialog" id="confirm-delete" aria-labelledby="confirm-delete-title" aria-describedby="confirm-delete-desc">
     <form method="dialog" class="dialog-body">
-      <div class="dialog-icon">{{ icon("trash") }}</div>
       <h2 id="confirm-delete-title" class="dialog-title">Delete <span data-delete-name>this student</span>?</h2>
-      <p id="confirm-delete-desc" class="muted">This permanently removes the record from the database. This cannot be undone.</p>
+      <p id="confirm-delete-desc" class="muted">This permanently removes the record. This action cannot be undone.</p>
       <div class="dialog-actions">
         <button class="btn btn-secondary" value="cancel" autofocus>Cancel</button>
-        <button class="btn btn-danger" value="confirm">{{ icon("trash") }}Delete student</button>
+        <button class="btn btn-danger" value="confirm">Delete</button>
       </div>
     </form>
   </dialog>

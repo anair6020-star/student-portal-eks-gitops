@@ -2,22 +2,7 @@
 (function () {
   "use strict";
 
-  var root = document.documentElement;
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  // ---- Theme toggle ------------------------------------------------------------------
-  function currentTheme() {
-    var set = root.getAttribute("data-theme");
-    if (set) return set;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
-  document.querySelectorAll("[data-theme-toggle]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var next = currentTheme() === "dark" ? "light" : "dark";
-      root.setAttribute("data-theme", next);
-      try { localStorage.setItem("sis-theme", next); } catch (e) { /* ignore */ }
-    });
-  });
 
   // ---- Toasts: auto-dismiss after 5s, pause on hover ----------------------------------
   function dismiss(toast) {
@@ -29,10 +14,9 @@
   document.querySelectorAll("[data-toast]").forEach(function (toast) {
     var timer = null;
     var start = function () { timer = window.setTimeout(function () { dismiss(toast); }, 5000); };
-    toast.classList.add("is-timed");
     start();
-    toast.addEventListener("mouseenter", function () { window.clearTimeout(timer); toast.classList.remove("is-timed"); });
-    toast.addEventListener("mouseleave", function () { toast.classList.add("is-timed"); start(); });
+    toast.addEventListener("mouseenter", function () { window.clearTimeout(timer); });
+    toast.addEventListener("mouseleave", start);
     var close = toast.querySelector("[data-toast-close]");
     if (close) close.addEventListener("click", function () { dismiss(toast); });
   });
@@ -77,49 +61,6 @@
       search.select();
     }
   });
-
-  // ---- KPI count-up --------------------------------------------------------------------
-  var counters = document.querySelectorAll("[data-count]");
-  function animateCount(el) {
-    var target = parseFloat(el.getAttribute("data-count")) || 0;
-    var decimals = parseInt(el.getAttribute("data-decimals") || "0", 10);
-    var duration = 900;
-    var t0 = null;
-    function frame(ts) {
-      if (t0 === null) t0 = ts;
-      var p = Math.min((ts - t0) / duration, 1);
-      var eased = 1 - Math.pow(1 - p, 3);
-      el.textContent = (target * eased).toFixed(decimals);
-      if (p < 1) window.requestAnimationFrame(frame);
-    }
-    window.requestAnimationFrame(frame);
-  }
-  if (!reduceMotion && "IntersectionObserver" in window) {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) { animateCount(entry.target); io.unobserve(entry.target); }
-      });
-    }, { threshold: 0.4 });
-    counters.forEach(function (el) { io.observe(el); });
-  }
-
-  // ---- Hero illustration: gentle 3D tilt toward the pointer ---------------------------
-  var tilt = document.querySelector("[data-tilt]");
-  if (tilt && !reduceMotion && window.matchMedia("(pointer: fine)").matches) {
-    var inner = tilt.firstElementChild;
-    var hero = tilt.closest(".hero") || tilt;
-    hero.addEventListener("pointermove", function (event) {
-      var r = tilt.getBoundingClientRect();
-      var x = (event.clientX - r.left) / r.width - 0.5;
-      var y = (event.clientY - r.top) / r.height - 0.5;
-      inner.style.setProperty("--tilt-y", (x * 14).toFixed(2) + "deg");
-      inner.style.setProperty("--tilt-x", (-y * 10).toFixed(2) + "deg");
-    });
-    hero.addEventListener("pointerleave", function () {
-      inner.style.setProperty("--tilt-y", "0deg");
-      inner.style.setProperty("--tilt-x", "0deg");
-    });
-  }
 
   // ---- Form: live preview, focus the error summary ------------------------------------
   document.querySelectorAll("[data-preview]").forEach(function (target) {

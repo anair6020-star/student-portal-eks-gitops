@@ -4,7 +4,7 @@
 {% set editing = mode == "edit" %}
 {% block title %}{{ "Edit " ~ student.name if editing else "Add student" }}{% endblock %}
 {% block content %}
-<nav class="crumbs reveal" aria-label="Breadcrumb">
+<nav class="crumbs" aria-label="Breadcrumb">
   {% if editing %}
   <a href="{{ url_for('web.student_detail', student_id=student.id) }}">{{ icon("arrow-left") }}{{ student.name }}</a>
   {% else %}
@@ -12,16 +12,15 @@
   {% endif %}
 </nav>
 
-<header class="page-head reveal">
+<header class="page-head">
   <div>
-    <p class="eyebrow">{{ icon("pencil" if editing else "user-plus") }} {{ "Edit record" if editing else "New record" }}</p>
     <h1 class="page-title">{{ "Edit student" if editing else "Add a student" }}</h1>
     <p class="page-sub">{{ "Update the details below and save." if editing else "Fill in the details. All fields are required." }}</p>
   </div>
 </header>
 
 <section class="form-layout">
-  <form class="card form reveal" method="post" novalidate>
+  <form class="card form" method="post" novalidate>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     {% if errors %}
@@ -80,8 +79,8 @@
     </div>
   </form>
 
-  <aside class="card form-aside reveal" aria-label="Preview">
-    <p class="eyebrow">Preview</p>
+  <aside class="card form-aside" aria-label="Preview">
+    <h2 class="card-title">Preview</h2>
     <div class="preview">
       {{ avatar(form.get("name") or "New Student", "lg") }}
       <p class="preview-name" data-preview="name">{{ form.get("name") or "New student" }}</p>

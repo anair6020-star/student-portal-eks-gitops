@@ -15,9 +15,9 @@ def html(response):
 def test_dashboard_shows_kpis_charts_pipeline_and_badge(seeded):
     page = html(seeded.get("/"))
     assert "Welcome to the Student Portal" in page
-    assert 'data-count="25"' in page  # total students KPI
+    assert '<p class="kpi-value">25</p>' in page  # total students KPI
     assert "Students per course" in page and 'class="bar-fill"' in page
-    assert "Year distribution" in page and 'class="donut-seg' in page
+    assert "Students by year" in page and 'class="donut-seg' in page
     assert "Release pipeline" in page and "Argo CD" in page
     assert "Recently added" in page and "Ayaan Shetty" in page
     assert 'data-testid="app-version">test-123<' in page
@@ -110,7 +110,7 @@ def test_toast_rendered_for_flash(seeded):
 # ---- errors ----------------------------------------------------------------------
 def test_html_404_page(seeded):
     r = seeded.get("/no-such-page")
-    assert r.status_code == 404 and "This page isn’t in the cluster" in html(r)
+    assert r.status_code == 404 and "Page not found" in html(r)
 
 
 def test_html_500_page(make_app):
@@ -134,7 +134,6 @@ def test_static_assets_are_self_hosted(seeded):
     for path in (
         "/static/css/app.css",
         "/static/js/app.js",
-        "/static/js/theme.js",
         "/static/fonts/InterVariable.woff2",
     ):
         assert seeded.get(path).status_code == 200, path

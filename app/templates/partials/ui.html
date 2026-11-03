@@ -1,7 +1,7 @@
 {% from "partials/icons.html" import icon %}
 
 {% macro avatar(name, size="md") -%}
-<span class="avatar avatar-{{ size }} tone-{{ name|avatar_tone }}" aria-hidden="true">{{ name|initials }}</span>
+<span class="avatar avatar-{{ size }}" aria-hidden="true">{{ name|initials }}</span>
 {%- endmacro %}
 
 {% macro year_badge(year) -%}

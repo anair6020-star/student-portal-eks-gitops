@@ -4,62 +4,54 @@
 {% block title %}Dashboard{% endblock %}
 {% block content %}
 
-<section class="hero reveal" aria-labelledby="hero-title">
-  <div class="hero-copy">
-    <p class="eyebrow">{{ icon("cap") }} CSA3004 · Cloud Native Orchestration</p>
-    <h1 id="hero-title" class="hero-title">Welcome to the Student Portal</h1>
-    <p class="hero-lead">Student records, served from Kubernetes. Every change ships through GitHub Actions, Amazon ECR and Argo CD before it reaches this page.</p>
-    <div class="hero-actions">
-      <a class="btn btn-primary" href="{{ url_for('web.list_students') }}">{{ icon("users") }}Browse students</a>
-      <a class="btn btn-secondary" href="{{ url_for('web.create_student') }}">{{ icon("user-plus") }}Add student</a>
-    </div>
+<header class="page-head">
+  <div>
+    <p class="page-kicker">CSA3004 · Cloud Native Orchestration</p>
+    <h1 class="page-title">Welcome to the Student Portal</h1>
+    <p class="page-sub">Overview of student records and the current deployment.</p>
   </div>
-  <figure class="hero-art" data-tilt>
-    <div class="hero-art-inner">{% include "partials/cluster.svg.html" %}</div>
-    <figcaption class="iso-legend">
-      <span><i class="dot dot-self"></i>This pod</span>
-      <span><i class="dot dot-replica"></i>Replica</span>
-      <span><i class="dot dot-db"></i>PostgreSQL</span>
-      <span><i class="dot dot-image"></i>New image</span>
-    </figcaption>
-  </figure>
-</section>
+  <div class="page-actions">
+    <a class="btn btn-secondary" href="{{ url_for('web.list_students') }}">{{ icon("users") }}View students</a>
+    <a class="btn btn-primary" href="{{ url_for('web.create_student') }}">{{ icon("plus") }}Add student</a>
+  </div>
+</header>
 
 <section class="kpis" aria-label="Key figures">
   {% set kpis = [
-    ("users", "Total students", stats.total_students, 0, "Across every year"),
-    ("book", "Courses", stats.total_courses, 0, "Active programmes"),
-    ("trend", "Added this week", stats.added_last_7_days, 0, "Last 7 days"),
-    ("cap", "Average year", stats.average_year, 1, "Of study, 1 to 6"),
+    ("users", "Total students", stats.total_students, 0),
+    ("book", "Courses", stats.total_courses, 0),
+    ("calendar", "Added in last 7 days", stats.added_last_7_days, 0),
+    ("cap", "Average year of study", stats.average_year, 1),
   ] %}
-  {% for ico, label, value, decimals, note in kpis %}
-  <article class="card kpi reveal">
-    <div class="kpi-icon">{{ icon(ico) }}</div>
-    <p class="kpi-label">{{ label }}</p>
-    <p class="kpi-value" data-count="{{ value }}" data-decimals="{{ decimals }}">{{ "%.*f"|format(decimals, value) }}</p>
-    <p class="kpi-note">{{ note }}</p>
+  {% for ico, label, value, decimals in kpis %}
+  <article class="card kpi">
+    <div class="kpi-top">
+      <p class="kpi-label">{{ label }}</p>
+      <span class="kpi-icon">{{ icon(ico) }}</span>
+    </div>
+    <p class="kpi-value">{{ "%.*f"|format(decimals, value) }}</p>
   </article>
   {% endfor %}
 </section>
 
 <section class="grid-2">
-  <article class="card reveal" aria-labelledby="by-course-title">
+  <article class="card" aria-labelledby="by-course-title">
     <header class="card-head">
       <div>
         <h2 id="by-course-title" class="card-title">Students per course</h2>
-        <p class="card-sub">{{ stats.total_students }} students in {{ stats.total_courses }} courses</p>
+        <p class="card-sub">{{ stats.total_students }} students across {{ stats.total_courses }} courses</p>
       </div>
-      <a class="link" href="{{ url_for('web.list_students') }}">View all {{ icon("arrow-right") }}</a>
+      <a class="link" href="{{ url_for('web.list_students') }}">View all</a>
     </header>
     {% if course_bars %}
     <ul class="bars" role="list">
       {% for row in course_bars %}
       <li class="bar-row">
         <a class="bar-label" href="{{ url_for('web.list_students', course=row.label) }}">{{ row.label }}</a>
-        <span class="bar-value"><strong>{{ row.value }}</strong> <span class="muted">{{ row.share }}%</span></span>
-        <svg class="bar" width="100%" height="10" aria-hidden="true">
-          <rect class="bar-track" x="0" y="0" width="100%" height="10" rx="5"/>
-          <rect class="bar-fill" x="0" y="0" width="{{ row.pct }}%" height="10" rx="5"/>
+        <span class="bar-value">{{ row.value }} <span class="muted">({{ row.share }}%)</span></span>
+        <svg class="bar" width="100%" height="8" aria-hidden="true">
+          <rect class="bar-track" x="0" y="0" width="100%" height="8" rx="4"/>
+          <rect class="bar-fill" x="0" y="0" width="{{ row.pct }}%" height="8" rx="4"/>
         </svg>
       </li>
       {% endfor %}
@@ -69,73 +61,10 @@
     {% endif %}
   </article>
 
-  <article class="card reveal" aria-labelledby="recent-title">
+  <article class="card" aria-labelledby="by-year-title">
     <header class="card-head">
       <div>
-        <h2 id="recent-title" class="card-title">Recently added</h2>
-        <p class="card-sub">Newest records first</p>
-      </div>
-      <a class="link" href="{{ url_for('web.list_students', sort='created_at', order='desc') }}">All {{ icon("arrow-right") }}</a>
-    </header>
-    {% if stats.recent %}
-    <ul class="activity" role="list">
-      {% for s in stats.recent %}
-      <li>
-        <a class="activity-item" href="{{ url_for('web.student_detail', student_id=s.id) }}">
-          {{ avatar(s.name, "sm") }}
-          <span class="activity-text">
-            <span class="activity-name">{{ s.name }}</span>
-            <span class="activity-sub">{{ s.course }}</span>
-          </span>
-          <time class="activity-time" datetime="{{ s.created.isoformat() }}">{{ s.created_at|timeago }}</time>
-        </a>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <div class="empty-inline">
-      <p>No students yet.</p>
-      <a class="btn btn-primary btn-sm" href="{{ url_for('web.create_student') }}">{{ icon("plus") }}Add the first one</a>
-    </div>
-    {% endif %}
-  </article>
-</section>
-
-<section class="grid-2 grid-2-wide">
-  <article class="card reveal" aria-labelledby="pipeline-title">
-    <header class="card-head">
-      <div>
-        <h2 id="pipeline-title" class="card-title">Release pipeline</h2>
-        <p class="card-sub">How build <span class="mono">{{ app_version }}</span> reached this pod</p>
-      </div>
-      <span class="chip chip-ok">{{ icon("check") }}Running</span>
-    </header>
-    {% set stages = [
-      ("commit", "Commit", "git push to main"),
-      ("workflow", "GitHub Actions", "Test · build · smoke test"),
-      ("box", "Amazon ECR", "Image :" ~ app_version),
-      ("file-code", "GitOps manifest", "k8s/kustomization.yaml"),
-      ("sync", "Argo CD", "Sync · self-heal"),
-      ("cluster", "Amazon EKS", "Pod " ~ pod_name),
-    ] %}
-    <ol class="pipeline" role="list">
-      {% for ico, title, detail in stages %}
-      <li class="stage {{ 'stage-live' if loop.last }}">
-        <span class="stage-node">{{ icon(ico) }}</span>
-        <span class="stage-text">
-          <span class="stage-title">{{ title }}</span>
-          <span class="stage-detail {{ 'mono' if loop.index in (3, 4, 6) }}">{{ detail }}</span>
-        </span>
-        <span class="stage-status">{{ "Live" if loop.last else "Passed" }}{{ icon("check") }}</span>
-      </li>
-      {% endfor %}
-    </ol>
-  </article>
-
-  <article class="card reveal" aria-labelledby="by-year-title">
-    <header class="card-head">
-      <div>
-        <h2 id="by-year-title" class="card-title">Year distribution</h2>
+        <h2 id="by-year-title" class="card-title">Students by year</h2>
         <p class="card-sub">Average year {{ stats.average_year }}</p>
       </div>
     </header>
@@ -147,8 +76,7 @@
         <circle class="donut-seg tone-{{ seg.tone }}" cx="21" cy="21" r="15.9155" fill="none" stroke-width="5"
                 stroke-dasharray="{{ seg.dash }}" stroke-dashoffset="{{ seg.offset }}"><title>Year {{ seg.label }}: {{ seg.value }}</title></circle>
         {% endfor %}
-        <text class="donut-total" x="21" y="21.5" text-anchor="middle">{{ stats.total_students }}</text>
-        <text class="donut-caption" x="21" y="26.5" text-anchor="middle">students</text>
+        <text class="donut-total" x="21" y="22.5" text-anchor="middle">{{ stats.total_students }}</text>
       </svg>
       <ul class="legend" role="list">
         {% for seg in year_ring %}
@@ -164,6 +92,64 @@
     {% else %}
     <p class="empty-inline">No students yet.</p>
     {% endif %}
+  </article>
+</section>
+
+<section class="grid-2">
+  <article class="card card-flush" aria-labelledby="recent-title">
+    <header class="card-head card-head-pad">
+      <div>
+        <h2 id="recent-title" class="card-title">Recently added</h2>
+        <p class="card-sub">Newest records first</p>
+      </div>
+      <a class="link" href="{{ url_for('web.list_students', sort='created_at', order='desc') }}">View all</a>
+    </header>
+    {% if stats.recent %}
+    <table class="table table-compact">
+      <thead>
+        <tr><th scope="col">Student</th><th scope="col" class="hide-sm">Course</th><th scope="col" class="right">Added</th></tr>
+      </thead>
+      <tbody>
+        {% for s in stats.recent %}
+        <tr>
+          <td><a class="person" href="{{ url_for('web.student_detail', student_id=s.id) }}">{{ avatar(s.name, "sm") }}<span class="person-name">{{ s.name }}</span></a></td>
+          <td class="muted hide-sm">{{ s.course }}</td>
+          <td class="right muted nowrap"><time datetime="{{ s.created.isoformat() }}">{{ s.created_at|timeago }}</time></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-inline card-head-pad">
+      <p>No students yet.</p>
+      <a class="btn btn-primary btn-sm" href="{{ url_for('web.create_student') }}">Add the first one</a>
+    </div>
+    {% endif %}
+  </article>
+
+  <article class="card" aria-labelledby="pipeline-title">
+    <header class="card-head">
+      <div>
+        <h2 id="pipeline-title" class="card-title">Release pipeline</h2>
+        <p class="card-sub">How version <span class="mono">{{ app_version }}</span> was deployed</p>
+      </div>
+    </header>
+    {% set stages = [
+      ("Commit", "Code pushed to main"),
+      ("GitHub Actions", "Tests, Docker build, smoke test"),
+      ("Amazon ECR", "Image tagged " ~ app_version),
+      ("GitOps manifest", "k8s/kustomization.yaml updated"),
+      ("Argo CD", "Synced to the cluster"),
+      ("Amazon EKS", "Running on pod " ~ pod_name),
+    ] %}
+    <ol class="steps" role="list">
+      {% for title, detail in stages %}
+      <li class="step {{ 'step-current' if loop.last }}">
+        <span class="step-num">{{ loop.index }}</span>
+        <span class="step-text"><span class="step-title">{{ title }}</span><span class="step-detail">{{ detail }}</span></span>
+      </li>
+      {% endfor %}
+    </ol>
   </article>
 </section>
 {% endblock %}

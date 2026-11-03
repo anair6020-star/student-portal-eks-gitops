@@ -43,14 +43,14 @@ Key design decisions:
 
 | Feature | Where |
 |---|---|
-| **Dashboard**: KPI cards, students-per-course bars, year donut, release pipeline, recent activity (charts are server-rendered inline SVG, no chart library) | `/` |
+| **Dashboard**: KPI cards, students-per-course bars, students-by-year chart, recently added, release pipeline (charts are server-rendered inline SVG, no chart library) | `/` |
 | **Students list**: server-side search, course and year filters, sortable columns, pagination with page size, empty states | `/students` |
 | **CSV export** of the current filtered list (formula-safe cells) | `/students/export.csv` |
 | **Student detail** page | `/students/<id>` |
 | **Add / edit** with inline validation, an error summary, preserved input and a live preview | `/students/new`, `/students/<id>/edit` |
 | **Delete** with an accessible `<dialog>` confirmation (no browser `confirm()`) | Delete buttons |
 | **Toast notifications** for flash messages (`aria-live`) | Every page |
-| Light and dark themes (follows the OS, toggle remembered), keyboard navigation, reduced-motion support, mobile layout at 375px | Every page |
+| Clean admin layout (navy sidebar, one blue accent), keyboard navigation, visible focus, reduced-motion support, mobile layout at 375px | Every page |
 | Friendly **404 / 500** pages; JSON errors on API paths | Any missing route |
 | Original JSON API, unchanged | `GET/POST /api/students`, `GET/DELETE /api/students/<id>` |
 | **Versioned API** with pagination envelope (`?q=&course=&year=&sort=&order=&page=&per_page=`), `PUT`, and `{"error": {"code", "message", "fields"}}` errors | `/api/v1/students`, `/api/v1/students/<id>` |
@@ -60,14 +60,13 @@ Key design decisions:
 Security and operations: a self-only Content-Security-Policy (fonts, icons and scripts are all served from `app/static/`, nothing from a CDN), `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, CSRF on every form, and structured JSON logs with an `X-Request-ID` that is accepted or generated and echoed back.
 
 <details>
-<summary>More screenshots (light, dark, mobile)</summary>
+<summary>More screenshots (desktop and mobile)</summary>
 
 | | |
 |---|---|
-| ![Dashboard, dark](docs/screenshots/dashboard-desktop-dark.png) | ![Students, light](docs/screenshots/students-desktop-light.png) |
-| ![Students, dark](docs/screenshots/students-desktop-dark.png) | ![Form with validation errors](docs/screenshots/form-errors-desktop-light.png) |
-| ![Student detail, dark](docs/screenshots/detail-desktop-dark.png) | ![Delete confirmation dialog](docs/screenshots/dialog-desktop-light.png) |
-| ![Dashboard on a phone, light](docs/screenshots/dashboard-mobile-light.png) | ![Students on a phone, dark](docs/screenshots/students-mobile-dark.png) |
+| ![Students list](docs/screenshots/students.png) | ![Form with validation errors](docs/screenshots/form-errors.png) |
+| ![Student detail](docs/screenshots/detail.png) | ![Delete confirmation dialog](docs/screenshots/dialog.png) |
+| ![Dashboard on a phone](docs/screenshots/dashboard-mobile.png) | ![Students on a phone](docs/screenshots/students-mobile.png) |
 
 </details>
 

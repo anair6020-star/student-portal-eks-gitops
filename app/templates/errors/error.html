@@ -2,9 +2,8 @@
 {% from "partials/icons.html" import icon %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
-<section class="error-page reveal">
+<section class="error-page">
   <div class="error-code" aria-hidden="true">{{ status }}</div>
-  <p class="eyebrow">Error {{ status }}</p>
   <h1 class="page-title">{{ title }}</h1>
   <p class="muted">{{ message }}</p>
   {% if g.request_id %}<p class="muted small">Reference <code class="mono">{{ g.request_id }}</code></p>{% endif %}

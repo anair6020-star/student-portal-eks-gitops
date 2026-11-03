@@ -3,14 +3,13 @@
 {% from "partials/ui.html" import avatar, year_badge, course_tag, delete_form %}
 {% block title %}{{ student.name }}{% endblock %}
 {% block content %}
-<nav class="crumbs reveal" aria-label="Breadcrumb">
+<nav class="crumbs" aria-label="Breadcrumb">
   <a href="{{ url_for('web.list_students') }}">{{ icon("arrow-left") }}Students</a>
   <span aria-hidden="true">/</span>
   <span aria-current="page">{{ student.roll_number }}</span>
 </nav>
 
-<section class="card profile reveal">
-  <div class="profile-cover" aria-hidden="true"></div>
+<section class="card profile">
   <div class="profile-main">
     {{ avatar(student.name, "xl") }}
     <div class="profile-id">
@@ -29,7 +28,7 @@
 </section>
 
 <section class="grid-2">
-  <article class="card reveal" aria-labelledby="details-title">
+  <article class="card" aria-labelledby="details-title">
     <header class="card-head"><h2 id="details-title" class="card-title">Details</h2></header>
     <dl class="facts">
       <div><dt>{{ icon("hash") }}Roll number</dt><dd class="mono">{{ student.roll_number }}</dd></div>
@@ -40,7 +39,7 @@
     </dl>
   </article>
 
-  <article class="card reveal" aria-labelledby="record-title">
+  <article class="card" aria-labelledby="record-title">
     <header class="card-head"><h2 id="record-title" class="card-title">Record</h2></header>
     <ol class="timeline" role="list">
       <li>
