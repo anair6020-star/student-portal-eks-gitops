@@ -16,4 +16,4 @@ resources:
 images:
   - name: student-portal
     newName: 891495583325.dkr.ecr.ap-southeast-2.amazonaws.com/student-portal
-    newTag: 2dd9ff9
+    newTag: 7d93522
