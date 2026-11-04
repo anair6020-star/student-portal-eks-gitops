@@ -4,7 +4,7 @@
 {% block title %}Dashboard{% endblock %}
 {% from "partials/banner.html" import banner %}
 {% block banner %}
-{% call banner("Welcome to the Student Portal - Live Demo", [("Dashboard", None)], "Student records and deployment status for the Student Information System.", kicker="CSA3004 · Cloud Native Orchestration") %}
+{% call banner("Welcome to the Student Portal - Batch 2026", [("Dashboard", None)], "Student records and deployment status for the Student Information System.", kicker="CSA3004 · Cloud Native Orchestration") %}
   <a class="btn btn-light" href="{{ url_for('web.list_students') }}">{{ icon("users") }}View students</a>
   <a class="btn btn-gold" href="{{ url_for('web.create_student') }}">{{ icon("plus") }}Add student</a>
 {% endcall %}
